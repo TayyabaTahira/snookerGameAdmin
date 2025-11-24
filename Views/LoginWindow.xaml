@@ -51,6 +51,7 @@
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="BorderBrush" Value="#3a3a4e"/>
             <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -59,7 +60,8 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
                             <ScrollViewer x:Name="PART_ContentHost" 
-                                         Padding="{TemplateBinding Padding}"/>
+                                         Padding="{TemplateBinding Padding}"
+                                         VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -79,6 +81,7 @@
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="BorderBrush" Value="#3a3a4e"/>
             <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="PasswordBox">
@@ -87,7 +90,8 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
                             <ScrollViewer x:Name="PART_ContentHost" 
-                                         Padding="{TemplateBinding Padding}"/>
+                                         Padding="{TemplateBinding Padding}"
+                                         VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -109,7 +113,7 @@
         <!-- Header -->
         <Border Grid.Row="0" Background="#0f3460" Padding="20">
             <StackPanel>
-                <TextBlock Text="??" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="🎱" FontSize="48" FontFamily="Segoe UI Emoji" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                 <TextBlock Text="SNOOKER CLUB" 
                           FontSize="24" 
                           FontWeight="Bold" 
@@ -136,6 +140,7 @@
                     Style="{StaticResource ModernTextBox}"
                     Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                     Margin="0,0,0,15"
+                    Height="40"
                     KeyDown="Input_KeyDown"/>
 
             <TextBlock Text="Password" 
@@ -145,6 +150,7 @@
             <PasswordBox x:Name="PasswordBox"
                         Style="{StaticResource ModernPasswordBox}"
                         Margin="0,0,0,20"
+                        Height="40"
                         PasswordChanged="PasswordBox_PasswordChanged"
                         KeyDown="Input_KeyDown"/>
 

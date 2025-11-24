@@ -53,9 +53,11 @@ namespace SnookerGameManagementSystem
                 // Test database connection
                 TestDatabaseConnection();
 
-                // Show login window
+                // Show login window - set it as MainWindow
                 var loginWindow = ServiceProvider.GetRequiredService<LoginWindow>();
+                MainWindow = loginWindow;
                 loginWindow.Show();
+                System.Diagnostics.Debug.WriteLine("[App] Login window shown as MainWindow");
             }
             catch (FileNotFoundException ex)
             {

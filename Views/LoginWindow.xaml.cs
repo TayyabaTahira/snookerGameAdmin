@@ -34,23 +34,45 @@ namespace SnookerGameManagementSystem.Views
             try
             {
                 System.Diagnostics.Debug.WriteLine("[LoginWindow] OnLoginSuccessful called!");
+                System.Diagnostics.Debug.WriteLine($"[LoginWindow] Current MainWindow: {Application.Current.MainWindow?.GetType().Name ?? "NULL"}");
                 
-                var dashboardWindow = App.ServiceProvider?.GetService(typeof(DashboardWindow)) as DashboardWindow;
-                if (dashboardWindow != null)
+                // Use Dispatcher to ensure we're on the UI thread
+                Dispatcher.Invoke(() =>
                 {
-                    System.Diagnostics.Debug.WriteLine("[LoginWindow] Opening dashboard...");
-                    dashboardWindow.Show();
-                    this.Close();
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("[LoginWindow] ERROR: DashboardWindow is null!");
-                    MessageBox.Show("Error: Could not open dashboard window", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                    var dashboardWindow = App.ServiceProvider?.GetService(typeof(DashboardWindow)) as DashboardWindow;
+                    if (dashboardWindow != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[LoginWindow] Opening dashboard...");
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Dashboard window created: {dashboardWindow.GetHashCode()}");
+                        
+                        // Transfer MainWindow to dashboard BEFORE showing it
+                        Application.Current.MainWindow = dashboardWindow;
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] MainWindow transferred to dashboard: {Application.Current.MainWindow?.GetType().Name}");
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] ShutdownMode: {Application.Current.ShutdownMode}");
+                        
+                        // Now show dashboard
+                        dashboardWindow.Show();
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Dashboard shown. IsVisible: {dashboardWindow.IsVisible}");
+                        
+                        // Close login window (this will not close the app since MainWindow is now Dashboard)
+                        System.Diagnostics.Debug.WriteLine("[LoginWindow] About to close login window...");
+                        this.Close();
+                        
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Login window closed successfully");
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Current MainWindow after close: {Application.Current.MainWindow?.GetType().Name ?? "NULL"}");
+                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Dashboard still visible: {dashboardWindow.IsVisible}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("[LoginWindow] ERROR: DashboardWindow is null!");
+                        MessageBox.Show("Error: Could not open dashboard window", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                });
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[LoginWindow] ERROR in OnLoginSuccessful: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[LoginWindow] Stack trace: {ex.StackTrace}");
                 MessageBox.Show($"Error opening dashboard: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -60,12 +82,10 @@ namespace SnookerGameManagementSystem.Views
             try
             {
                 System.Diagnostics.Debug.WriteLine("[LoginWindow] ========== LOGIN BUTTON CLICKED ==========");
-                MessageBox.Show("Login button clicked! Check Output window.", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
                 
                 if (_viewModel == null)
                 {
                     System.Diagnostics.Debug.WriteLine("[LoginWindow] ERROR: ViewModel is NULL!");
-                    MessageBox.Show("Error: ViewModel is null", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
                 
@@ -76,23 +96,19 @@ namespace SnookerGameManagementSystem.Views
                 if (_viewModel.LoginCommand.CanExecute(null))
                 {
                     System.Diagnostics.Debug.WriteLine("[LoginWindow] Executing login command...");
-                    MessageBox.Show("Executing login command...", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
                     _viewModel.LoginCommand.Execute(null);
                     System.Diagnostics.Debug.WriteLine("[LoginWindow] Command executed");
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine("[LoginWindow] ERROR: Command cannot execute!");
-                    MessageBox.Show($"Command cannot execute!\nUsername: {_viewModel.Username}\nPassword length: {_viewModel.Password?.Length ?? 0}", 
-                        "Cannot Login", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[LoginWindow] EXCEPTION: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[LoginWindow] Stack: {ex.StackTrace}");
-                MessageBox.Show($"Exception during login:\n{ex.Message}\n\nStack:\n{ex.StackTrace}", 
-                    "Exception", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"An error occurred during login. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

@@ -76,7 +76,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Text="??" FontSize="32" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBlock Text="🎱" FontSize="32" FontFamily="Segoe UI Emoji" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <StackPanel>
                         <TextBlock Text="SNOOKER CLUB" 
                                   FontSize="20" 
@@ -89,26 +89,29 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="?? Refresh" 
+                    <Button Content="🔄 Refresh" 
                            Command="{Binding RefreshCommand}"
                            Background="#16213e"
                            Foreground="White"
+                           FontFamily="Segoe UI Emoji"
                            Padding="15,8"
                            Margin="0,0,10,0"
                            BorderThickness="0"
                            Cursor="Hand"/>
                     
-                    <Button Content="?? Reports" 
+                    <Button Content="📊 Reports" 
                            Background="#16213e"
                            Foreground="White"
+                           FontFamily="Segoe UI Emoji"
                            Padding="15,8"
                            Margin="0,0,10,0"
                            BorderThickness="0"
                            Cursor="Hand"/>
                     
-                    <Button Content="?? Customers" 
+                    <Button Content="👥  Customers" 
                            Background="#16213e"
                            Foreground="White"
+                           FontFamily="Segoe UI Emoji"
                            Padding="15,8"
                            BorderThickness="0"
                            Cursor="Hand"/>

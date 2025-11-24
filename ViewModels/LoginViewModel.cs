@@ -113,22 +113,15 @@ namespace SnookerGameManagementSystem.ViewModels
                 }
 
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] Calling AuthService.AuthenticateAsync...");
-                MessageBox.Show($"About to authenticate:\nUser: {Username}\nPass length: {Password.Length}", 
-                    "Debug - Before Auth", MessageBoxButton.OK, MessageBoxImage.Information);
                 
                 var user = await _authService.AuthenticateAsync(Username, Password);
                 
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] AuthService returned: {(user != null ? "USER OBJECT" : "NULL")}");
-                MessageBox.Show($"Auth result: {(user != null ? $"SUCCESS (User: {user.Username})" : "FAILED (null)")}", 
-                    "Debug - After Auth", MessageBoxButton.OK, MessageBoxImage.Information);
                 
                 if (user != null)
                 {
                     System.Diagnostics.Debug.WriteLine($"[LoginViewModel] Login successful! User: {user.Username}, ID: {user.Id}");
                     System.Diagnostics.Debug.WriteLine($"[LoginViewModel] Raising LoginSuccessful event...");
-                    
-                    MessageBox.Show($"Login successful!\nAbout to raise LoginSuccessful event.\nUser: {user.Username}", 
-                        "Debug - Success", MessageBoxButton.OK, MessageBoxImage.Information);
                     
                     LoginSuccessful?.Invoke(this, EventArgs.Empty);
                     
@@ -138,8 +131,6 @@ namespace SnookerGameManagementSystem.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine("[LoginViewModel] Login failed: User is null");
                     ErrorMessage = "Invalid username or password";
-                    MessageBox.Show("Authentication failed!\nInvalid username or password", 
-                        "Login Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
@@ -147,8 +138,6 @@ namespace SnookerGameManagementSystem.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] EXCEPTION: {ex.GetType().Name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] Stack: {ex.StackTrace}");
                 ErrorMessage = $"Login failed: {ex.Message}";
-                MessageBox.Show($"Exception during authentication:\n{ex.Message}\n\nType: {ex.GetType().Name}", 
-                    "Exception", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
