@@ -105,8 +105,15 @@ namespace SnookerGameManagementSystem.ViewModels
 
             try
             {
+                // Validate inputs before authentication
+                if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+                {
+                    ErrorMessage = "Username and password are required";
+                    return;
+                }
+
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] Calling AuthService.AuthenticateAsync...");
-                MessageBox.Show($"About to authenticate:\nUser: {Username}\nPass length: {Password?.Length ?? 0}", 
+                MessageBox.Show($"About to authenticate:\nUser: {Username}\nPass length: {Password.Length}", 
                     "Debug - Before Auth", MessageBoxButton.OK, MessageBoxImage.Information);
                 
                 var user = await _authService.AuthenticateAsync(Username, Password);
