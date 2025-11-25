@@ -38,7 +38,13 @@ namespace SnookerGameManagementSystem.Services
             _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
 
-            return session;
+            // Reload with relationships
+            var createdSession = await _context.Sessions
+                .Include(s => s.GameType)
+                .Include(s => s.Frames)
+                .FirstOrDefaultAsync(s => s.Id == session.Id);
+
+            return createdSession ?? session;
         }
 
         public async Task<Session?> GetSessionByIdAsync(Guid sessionId)

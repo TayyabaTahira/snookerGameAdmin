@@ -113,7 +113,7 @@
         <!-- Header -->
         <Border Grid.Row="0" Background="#0f3460" Padding="20">
             <StackPanel>
-                <TextBlock Text="🎱" FontSize="48" FontFamily="Segoe UI Emoji" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="🎱" Foreground="White" FontSize="50" FontFamily="Segoe UI Emoji" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                 <TextBlock Text="SNOOKER CLUB" 
                           FontSize="24" 
                           FontWeight="Bold" 

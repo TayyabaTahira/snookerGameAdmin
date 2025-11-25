@@ -1,0 +1,88 @@
+<Window x:Class="SnookerGameManagementSystem.Views.CustomerManagementWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Customer Management" 
+        Height="700" 
+        Width="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="#1a1a2e">
+
+    <Window.Resources>
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#d83551"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#0f3460" Padding="20">
+            <Grid>
+                <TextBlock Text="Customer Management" 
+                          FontSize="24" 
+                          FontWeight="Bold" 
+                          Foreground="White"/>
+                <Button Content="+ Add Customer"
+                       Style="{StaticResource PrimaryButton}"
+                       Command="{Binding AddCustomerCommand}"
+                       HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <!-- Customer List -->
+        <DataGrid Grid.Row="1"
+                 ItemsSource="{Binding Customers}"
+                 AutoGenerateColumns="False"
+                 Background="#1a1a2e"
+                 Foreground="White"
+                 GridLinesVisibility="None"
+                 HeadersVisibility="Column"
+                 CanUserAddRows="False"
+                 IsReadOnly="True"
+                 Margin="20">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="2*"/>
+                <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*"/>
+                <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat='PKR {0:N2}'}" Width="*"/>
+                <DataGridTemplateColumn Header="Actions" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="View Details" 
+                                   Command="{Binding DataContext.ViewCustomerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                   CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

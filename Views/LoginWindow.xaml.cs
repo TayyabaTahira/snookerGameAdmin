@@ -45,22 +45,20 @@ namespace SnookerGameManagementSystem.Views
                         System.Diagnostics.Debug.WriteLine("[LoginWindow] Opening dashboard...");
                         System.Diagnostics.Debug.WriteLine($"[LoginWindow] Dashboard window created: {dashboardWindow.GetHashCode()}");
                         
-                        // Transfer MainWindow to dashboard BEFORE showing it
+                        // CRITICAL FIX: Transfer MainWindow BEFORE showing dashboard
+                        // This prevents the app from shutting down when login window closes
                         Application.Current.MainWindow = dashboardWindow;
                         System.Diagnostics.Debug.WriteLine($"[LoginWindow] MainWindow transferred to dashboard: {Application.Current.MainWindow?.GetType().Name}");
                         System.Diagnostics.Debug.WriteLine($"[LoginWindow] ShutdownMode: {Application.Current.ShutdownMode}");
                         
-                        // Now show dashboard
+                        // Now show the dashboard
                         dashboardWindow.Show();
                         System.Diagnostics.Debug.WriteLine($"[LoginWindow] Dashboard shown. IsVisible: {dashboardWindow.IsVisible}");
                         
-                        // Close login window (this will not close the app since MainWindow is now Dashboard)
+                        // Close login window - this is now safe as MainWindow is already transferred
                         System.Diagnostics.Debug.WriteLine("[LoginWindow] About to close login window...");
                         this.Close();
-                        
-                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Login window closed successfully");
-                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Current MainWindow after close: {Application.Current.MainWindow?.GetType().Name ?? "NULL"}");
-                        System.Diagnostics.Debug.WriteLine($"[LoginWindow] Dashboard still visible: {dashboardWindow.IsVisible}");
+                        System.Diagnostics.Debug.WriteLine("[LoginWindow] Login window closed successfully");
                     }
                     else
                     {

@@ -229,14 +229,16 @@ namespace SnookerGameManagementSystem
                         });
                     
                     System.Diagnostics.Debug.WriteLine("[App] DbContext configured");
-                });
+                }, ServiceLifetime.Transient);
                 System.Diagnostics.Debug.WriteLine("[App] DbContext service added");
 
-                // Services
-                services.AddScoped<AuthService>();
-                services.AddScoped<SessionService>();
-                services.AddScoped<CustomerService>();
-                services.AddScoped<GameRuleService>();
+                // Services - Transient for WPF
+                services.AddTransient<AuthService>();
+                services.AddTransient<SessionService>();
+                services.AddTransient<CustomerService>();
+                services.AddTransient<GameRuleService>();
+                services.AddTransient<GameTypeService>();
+                services.AddTransient<FrameService>();
                 System.Diagnostics.Debug.WriteLine("[App] Business services added");
 
                 // ViewModels
