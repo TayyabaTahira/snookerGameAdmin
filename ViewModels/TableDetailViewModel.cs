@@ -6,11 +6,12 @@ using SnookerGameManagementSystem.Services;
 
 namespace SnookerGameManagementSystem.ViewModels
 {
-    public class PlayerInfo
+    public partial class PlayerInfo
     {
         public string Name { get; set; } = string.Empty;
         public int WinStreak { get; set; }
         public Guid CustomerId { get; set; }
+        public string WinStreakDisplay => WinStreak > 0 ? $"Win Streak: {WinStreak}" : "No current streak";
     }
 
     public class TableDetailViewModel : ViewModelBase
@@ -18,6 +19,8 @@ namespace SnookerGameManagementSystem.ViewModels
         private readonly Session _session;
         private readonly SessionService _sessionService;
         private readonly CustomerService _customerService;
+        private readonly FrameService _frameService;
+        private readonly GameRuleService _gameRuleService;
         private ObservableCollection<PlayerInfo> _players = new();
         private bool _isClosed = false;
 
@@ -29,6 +32,8 @@ namespace SnookerGameManagementSystem.ViewModels
             _session = session;
             _sessionService = sessionService;
             _customerService = customerService;
+            _frameService = new FrameService(App.GetDbContext());
+            _gameRuleService = new GameRuleService(App.GetDbContext());
             
             // Load players
             LoadPlayers();
@@ -93,11 +98,31 @@ namespace SnookerGameManagementSystem.ViewModels
                         {
                             Name = participant.Customer.FullName,
                             CustomerId = participant.Customer.Id,
-                            WinStreak = 0 // TODO: Calculate actual win streak
+                            WinStreak = CalculateWinStreak(participant.Customer.Id)
                         });
                     }
                 }
             }
+        }
+
+        private int CalculateWinStreak(Guid customerId)
+        {
+            int streak = 0;
+            var frames = _session.Frames.OrderByDescending(f => f.StartedAt).ToList();
+            
+            foreach (var frame in frames)
+            {
+                if (frame.WinnerCustomerId == customerId)
+                {
+                    streak++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            
+            return streak;
         }
 
         private async Task AddPlayer()
@@ -166,20 +191,63 @@ namespace SnookerGameManagementSystem.ViewModels
         {
             try
             {
-                // TODO: Show billing dialog
-                MessageBox.Show(
-                    "Billing dialog will be shown here.\n\n" +
-                    "Features to implement:\n" +
-                    "- Calculate base rate + overtime\n" +
-                    "- Apply discounts\n" +
-                    "- Select payer (Loser/Split/Custom)\n" +
-                    "- Pay now or Credit\n" +
-                    "- Create ledger charges",
-                    "End Game - TODO",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                // Get base rate from game type rule
+                decimal baseRate = 0;
+                if (_session.GameTypeId != null)
+                {
+                    var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(_session.GameTypeId.Value);
+                    baseRate = rule?.BaseRate ?? 0;
+                }
 
-                await Task.CompletedTask;
+                // Show billing dialog
+                var billingViewModel = new EndGameBillingViewModel(_session, baseRate);
+                var billingDialog = new Views.EndGameBillingDialog(billingViewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+
+                if (billingDialog.ShowDialog() == true)
+                {
+                    // Get the last frame to update with billing info
+                    var lastFrame = _session.Frames.LastOrDefault();
+                    if (lastFrame != null)
+                    {
+                        lastFrame.OvertimeMinutes = billingViewModel.OvertimeMinutes;
+                        lastFrame.OvertimeAmountPk = billingViewModel.OvertimeAmount;
+                        lastFrame.LumpSumFinePk = billingViewModel.LumpSumFine;
+                        lastFrame.DiscountPk = billingViewModel.Discount;
+                        lastFrame.TotalAmountPk = billingViewModel.TotalAmount;
+                        lastFrame.PayerMode = billingViewModel.PayerMode;
+                        lastFrame.PayStatus = billingViewModel.PayStatus;
+                        lastFrame.EndedAt = DateTime.Now;
+
+                        // Create ledger charges based on payer mode
+                        await CreateLedgerCharges(lastFrame, billingViewModel);
+                    }
+
+                    // End the session
+                    await _sessionService.EndSessionAsync(_session.Id);
+
+                    _isClosed = true;
+                    SessionEnded?.Invoke(this, EventArgs.Empty);
+
+                    MessageBox.Show(
+                        $"Game ended successfully!\n\n" +
+                        $"Total Amount: PKR {billingViewModel.TotalAmount:N2}\n" +
+                        $"Payment Status: {billingViewModel.PayStatus}",
+                        "Game Ended",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    // Close the window
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var window = Application.Current.Windows
+                            .OfType<Window>()
+                            .FirstOrDefault(w => w.DataContext == this);
+                        window?.Close();
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -189,6 +257,62 @@ namespace SnookerGameManagementSystem.ViewModels
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+        }
+
+        private async Task CreateLedgerCharges(Frame frame, EndGameBillingViewModel billing)
+        {
+            var context = App.GetDbContext();
+            
+            switch (billing.PayerMode)
+            {
+                case PayerMode.LOSER:
+                    if (frame.LoserCustomerId != null)
+                    {
+                        var charge = new LedgerCharge
+                        {
+                            CustomerId = frame.LoserCustomerId.Value,
+                            FrameId = frame.Id,
+                            Amount = billing.TotalAmount,
+                            Description = $"Game charge - {_session.Name}",
+                            ChargedAt = DateTime.Now
+                        };
+                        context.LedgerCharges.Add(charge);
+                    }
+                    break;
+
+                case PayerMode.SPLIT:
+                    var splitAmount = billing.TotalAmount / Players.Count;
+                    foreach (var player in Players)
+                    {
+                        var charge = new LedgerCharge
+                        {
+                            CustomerId = player.CustomerId,
+                            FrameId = frame.Id,
+                            Amount = splitAmount,
+                            Description = $"Game charge (split) - {_session.Name}",
+                            ChargedAt = DateTime.Now
+                        };
+                        context.LedgerCharges.Add(charge);
+                    }
+                    break;
+
+                case PayerMode.EACH:
+                    foreach (var player in Players)
+                    {
+                        var charge = new LedgerCharge
+                        {
+                            CustomerId = player.CustomerId,
+                            FrameId = frame.Id,
+                            Amount = billing.TotalAmount,
+                            Description = $"Game charge (each) - {_session.Name}",
+                            ChargedAt = DateTime.Now
+                        };
+                        context.LedgerCharges.Add(charge);
+                    }
+                    break;
+            }
+
+            await context.SaveChangesAsync();
         }
 
         private async Task NextFrame()
@@ -205,20 +329,63 @@ namespace SnookerGameManagementSystem.ViewModels
                     return;
                 }
 
-                // TODO: Show winner selection dialog
-                // TODO: Create new frame
-                MessageBox.Show(
-                    "Winner selection dialog will be shown here.\n\n" +
-                    "Features to implement:\n" +
-                    "- Select winner from players\n" +
-                    "- Create new frame\n" +
-                    "- Update win streaks\n" +
-                    "- Refresh frame count",
-                    "Next Frame - TODO",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                // Show winner selection dialog
+                var winnerViewModel = new SelectWinnerViewModel(Players);
+                var winnerDialog = new Views.SelectWinnerDialog(winnerViewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
 
-                await Task.CompletedTask;
+                if (winnerDialog.ShowDialog() == true && winnerViewModel.SelectedWinner != null)
+                {
+                    var winner = winnerViewModel.SelectedWinner;
+
+                    // Get base rate
+                    decimal baseRate = 0;
+                    if (_session.GameTypeId != null)
+                    {
+                        var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(_session.GameTypeId.Value);
+                        baseRate = rule?.BaseRate ?? 0;
+                    }
+
+                    // End the current frame if it exists
+                    var currentFrame = _session.Frames.LastOrDefault();
+                    if (currentFrame != null && currentFrame.EndedAt == null)
+                    {
+                        // Determine loser (first player who is not winner)
+                        var loserId = Players.FirstOrDefault(p => p.CustomerId != winner.CustomerId)?.CustomerId;
+
+                        await _frameService.EndFrameAsync(
+                            currentFrame.Id,
+                            winner.CustomerId,
+                            loserId);
+                    }
+
+                    // Create new frame
+                    var playerIds = Players.Select(p => p.CustomerId).ToList();
+                    var newFrame = await _frameService.CreateFrameAsync(
+                        _session.Id,
+                        playerIds,
+                        baseRate);
+
+                    // Reload session to get updated frame count
+                    _session.Frames.Add(newFrame);
+
+                    // Update win streaks
+                    foreach (var player in Players)
+                    {
+                        player.WinStreak = CalculateWinStreak(player.CustomerId);
+                    }
+
+                    OnPropertyChanged(nameof(FrameCount));
+                    OnPropertyChanged(nameof(CanEndGame));
+
+                    MessageBox.Show(
+                        $"Frame {FrameCount} started!\n\nWinner: {winner.Name}",
+                        "Next Frame",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
             }
             catch (Exception ex)
             {

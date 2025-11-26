@@ -78,6 +78,11 @@ namespace SnookerGameManagementSystem.Data
                     .HasColumnName("default_payer_mode")
                     .HasConversion(payerModeConverter)
                     .IsRequired();
+                
+                // Ignore computed properties
+                entity.Ignore(e => e.Description);
+                entity.Ignore(e => e.BaseRate);
+                entity.Ignore(e => e.OvertimeRate);
 
                 entity.HasOne(e => e.GameType)
                     .WithMany(g => g.GameRules)
@@ -95,6 +100,9 @@ namespace SnookerGameManagementSystem.Data
                 entity.Property(e => e.FullName).HasColumnName("full_name").HasMaxLength(120).IsRequired();
                 entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(30);
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                
+                // Ignore computed property
+                entity.Ignore(e => e.Balance);
             });
 
             // Session
@@ -208,6 +216,10 @@ namespace SnookerGameManagementSystem.Data
                 entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(200).IsRequired();
                 entity.Property(e => e.AmountPk).HasColumnName("amount_pk").HasColumnType("decimal(10,2)").IsRequired();
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                
+                // Ignore computed properties
+                entity.Ignore(e => e.Amount);
+                entity.Ignore(e => e.ChargedAt);
 
                 entity.HasOne(e => e.Customer)
                     .WithMany(c => c.LedgerCharges)

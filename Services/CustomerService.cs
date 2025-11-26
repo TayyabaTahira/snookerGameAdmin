@@ -45,6 +45,23 @@ namespace SnookerGameManagementSystem.Services
             return customer;
         }
 
+        public async Task<Customer> UpdateCustomerAsync(Customer customer)
+        {
+            _context.Customers.Update(customer);
+            await _context.SaveChangesAsync();
+            return customer;
+        }
+
+        public async Task DeleteCustomerAsync(Guid customerId)
+        {
+            var customer = await _context.Customers.FindAsync(customerId);
+            if (customer != null)
+            {
+                _context.Customers.Remove(customer);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task<Customer> GetOrCreateCustomerAsync(string fullName, string? phone = null)
         {
             var existing = await FindCustomerByNameAsync(fullName);

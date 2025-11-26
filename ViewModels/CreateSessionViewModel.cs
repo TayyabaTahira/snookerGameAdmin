@@ -1,21 +1,25 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 using SnookerGameManagementSystem.Models;
+using SnookerGameManagementSystem.Services;
 
 namespace SnookerGameManagementSystem.ViewModels
 {
     public class CreateSessionViewModel : ViewModelBase
     {
+        private readonly CustomerService _customerService;
         private string _tableName = string.Empty;
         private GameType? _selectedGameType;
         private ObservableCollection<GameType> _gameTypes = new();
-        private ObservableCollection<string> _players = new();
-        private string _newPlayerName = string.Empty;
+        private ObservableCollection<Customer> _selectedCustomers = new();
 
-        public CreateSessionViewModel()
+        public CreateSessionViewModel(CustomerService customerService)
         {
-            AddPlayerCommand = new RelayCommand(_ => AddPlayer(), _ => CanAddPlayer);
-            RemovePlayerCommand = new RelayCommand(param => RemovePlayer(param as string));
+            _customerService = customerService;
+            
+            AddPlayerCommand = new RelayCommand(async _ => await AddPlayer());
+            RemovePlayerCommand = new RelayCommand(param => RemovePlayer(param as Customer));
         }
 
         public string TableName
@@ -48,54 +52,71 @@ namespace SnookerGameManagementSystem.ViewModels
             set => SetProperty(ref _gameTypes, value);
         }
 
-        public ObservableCollection<string> Players
+        public ObservableCollection<Customer> SelectedCustomers
         {
-            get => _players;
+            get => _selectedCustomers;
             set
             {
-                if (SetProperty(ref _players, value))
+                if (SetProperty(ref _selectedCustomers, value))
                 {
                     OnPropertyChanged(nameof(HasNoPlayers));
                 }
             }
         }
 
-        public string NewPlayerName
-        {
-            get => _newPlayerName;
-            set
-            {
-                if (SetProperty(ref _newPlayerName, value))
-                {
-                    OnPropertyChanged(nameof(CanAddPlayer));
-                }
-            }
-        }
-
         public bool CanCreate => !string.IsNullOrWhiteSpace(TableName) && SelectedGameType != null;
 
-        public bool CanAddPlayer => !string.IsNullOrWhiteSpace(NewPlayerName);
-
-        public bool HasNoPlayers => Players.Count == 0;
+        public bool HasNoPlayers => SelectedCustomers.Count == 0;
 
         public ICommand AddPlayerCommand { get; }
         public ICommand RemovePlayerCommand { get; }
 
-        private void AddPlayer()
+        private async Task AddPlayer()
         {
-            if (!string.IsNullOrWhiteSpace(NewPlayerName) && !Players.Contains(NewPlayerName.Trim()))
+            try
             {
-                Players.Add(NewPlayerName.Trim());
-                NewPlayerName = string.Empty;
-                OnPropertyChanged(nameof(HasNoPlayers));
+                // Show customer selection dialog
+                var dialogViewModel = new SelectCustomerViewModel(_customerService);
+                var dialog = new Views.SelectCustomerDialog(dialogViewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+
+                if (dialog.ShowDialog() == true && dialogViewModel.SelectedCustomer != null)
+                {
+                    var customer = dialogViewModel.SelectedCustomer;
+
+                    // Check if already added
+                    if (SelectedCustomers.Any(c => c.Id == customer.Id))
+                    {
+                        MessageBox.Show(
+                            $"{customer.FullName} is already added.",
+                            "Already Added",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                        return;
+                    }
+
+                    // Add to list
+                    SelectedCustomers.Add(customer);
+                    OnPropertyChanged(nameof(HasNoPlayers));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error adding player: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
-        private void RemovePlayer(string? playerName)
+        private void RemovePlayer(Customer? customer)
         {
-            if (playerName != null && Players.Contains(playerName))
+            if (customer != null && SelectedCustomers.Contains(customer))
             {
-                Players.Remove(playerName);
+                SelectedCustomers.Remove(customer);
                 OnPropertyChanged(nameof(HasNoPlayers));
             }
         }

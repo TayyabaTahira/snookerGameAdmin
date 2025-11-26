@@ -26,5 +26,42 @@ namespace SnookerGameManagementSystem.Services
                 .Include(r => r.GameType)
                 .FirstOrDefaultAsync(r => r.GameTypeId == gameTypeId);
         }
+
+        public async Task<GameRule> CreateGameRuleAsync(
+            Guid gameTypeId, 
+            string description, 
+            decimal baseRate, 
+            decimal overtimeRate)
+        {
+            var gameRule = new GameRule
+            {
+                GameTypeId = gameTypeId,
+                Description = description,
+                BaseRate = baseRate,
+                OvertimeRate = overtimeRate
+            };
+
+            _context.GameRules.Add(gameRule);
+            await _context.SaveChangesAsync();
+
+            return gameRule;
+        }
+
+        public async Task<GameRule> UpdateGameRuleAsync(GameRule gameRule)
+        {
+            _context.GameRules.Update(gameRule);
+            await _context.SaveChangesAsync();
+            return gameRule;
+        }
+
+        public async Task DeleteGameRuleAsync(Guid id)
+        {
+            var gameRule = await _context.GameRules.FindAsync(id);
+            if (gameRule != null)
+            {
+                _context.GameRules.Remove(gameRule);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

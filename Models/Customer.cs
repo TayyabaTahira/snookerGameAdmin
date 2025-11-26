@@ -9,6 +9,9 @@ namespace SnookerGameManagementSystem.Models
         public string? Phone { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         
+        // Computed property for display (not mapped to DB)
+        public decimal Balance { get; set; } = 0;
+        
         // Navigation properties
         public virtual ICollection<FrameParticipant> FrameParticipants { get; set; } = new List<FrameParticipant>();
         public virtual ICollection<LedgerCharge> LedgerCharges { get; set; } = new List<LedgerCharge>();

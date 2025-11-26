@@ -32,6 +32,7 @@ namespace SnookerGameManagementSystem.ViewModels
             AddTableCommand = new RelayCommand(async _ => await AddTableAsync());
             RefreshCommand = new RelayCommand(async _ => await LoadSessionsAsync());
             OpenTableCommand = new RelayCommand(param => OpenTable(param as SessionTileViewModel));
+            GameTypesCommand = new RelayCommand(_ => OpenGameTypes());
             CustomersCommand = new RelayCommand(_ => OpenCustomers());
             ReportsCommand = new RelayCommand(_ => OpenReports());
             
@@ -84,6 +85,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public ICommand AddTableCommand { get; }
         public ICommand RefreshCommand { get; }
         public ICommand OpenTableCommand { get; }
+        public ICommand GameTypesCommand { get; }
         public ICommand CustomersCommand { get; }
         public ICommand ReportsCommand { get; }
 
@@ -150,7 +152,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 var gameTypes = await _gameTypeService.GetAllGameTypesAsync();
                 
                 // Create and show dialog
-                var dialogViewModel = new CreateSessionViewModel
+                var dialogViewModel = new CreateSessionViewModel(_customerService)
                 {
                     TableName = defaultTableName,
                     GameTypes = new ObservableCollection<GameType>(gameTypes)
@@ -176,6 +178,22 @@ namespace SnookerGameManagementSystem.ViewModels
                     
                     System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Session created with ID: {session.Id}");
                     
+                    // If players were selected, create first frame
+                    if (dialogViewModel.SelectedCustomers.Count >= 2)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Creating first frame with {dialogViewModel.SelectedCustomers.Count} players");
+                        
+                        // Get base rate from game rule
+                        var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(dialogViewModel.SelectedGameType.Id);
+                        decimal baseRate = rule?.BaseRate ?? 0;
+                        
+                        var frameService = new FrameService(App.GetDbContext());
+                        var playerIds = dialogViewModel.SelectedCustomers.Select(c => c.Id).ToList();
+                        await frameService.CreateFrameAsync(session.Id, playerIds, baseRate);
+                        
+                        System.Diagnostics.Debug.WriteLine("[DashboardViewModel] First frame created");
+                    }
+                    
                     // Add to UI on the UI thread
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -184,38 +202,25 @@ namespace SnookerGameManagementSystem.ViewModels
                             OpenCommand = OpenTableCommand
                         };
                         Sessions.Add(tileViewModel);
-                        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Session tile added to UI. Total sessions: {Sessions.Count}");
+                        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Added new session tile for table: {session.Name}");
                     });
-                    
-                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] ========== AddTableAsync completed successfully ==========");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Dialog cancelled or invalid selection");
+                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] AddTableAsync cancelled or no game type selected");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] ========== ERROR in AddTableAsync ==========");
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Exception Type: {ex.GetType().Name}");
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error message: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Stack trace: {ex.StackTrace}");
+                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error in AddTableAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Stack: {ex.StackTrace}");
                 
-                if (ex.InnerException != null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Inner exception: {ex.InnerException.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Inner stack: {ex.InnerException.StackTrace}");
-                }
-                
-                // Show error to user on UI thread
-                await Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    MessageBox.Show(
-                        $"Error adding table:\n\n{ex.Message}\n\nPlease check the Output window for details.",
-                        "Error Creating Table",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                });
+                // Show error to user
+                MessageBox.Show(
+                    $"Error adding table: {ex.Message}",
+                    "Table Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
@@ -244,6 +249,27 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 MessageBox.Show(
                     $"Error opening table details:\n\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenGameTypes()
+        {
+            try
+            {
+                var viewModel = new GameTypeManagementViewModel(_gameTypeService);
+                var window = new Views.GameTypeManagementWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening game type management:\n\n{ex.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

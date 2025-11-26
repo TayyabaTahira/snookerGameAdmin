@@ -7,85 +7,139 @@ using SnookerGameManagementSystem.Views;
 
 namespace SnookerGameManagementSystem.ViewModels
 {
-    public class CustomerWithBalance
-    {
-        public Guid Id { get; set; }
-        public string FullName { get; set; } = string.Empty;
-        public string? Phone { get; set; }
-        public decimal Balance { get; set; }
-    }
-
     public class CustomerManagementViewModel : ViewModelBase
     {
         private readonly CustomerService _customerService;
-        private ObservableCollection<CustomerWithBalance> _customers = new();
+        private ObservableCollection<Customer> _customers = new();
 
         public CustomerManagementViewModel(CustomerService customerService)
         {
             _customerService = customerService;
-            
+
             AddCustomerCommand = new RelayCommand(async _ => await AddCustomer());
-            ViewCustomerCommand = new RelayCommand(param => ViewCustomer(param as CustomerWithBalance));
-            
-            LoadCustomers();
+            EditCustomerCommand = new RelayCommand(async param => await EditCustomer(param as Customer));
+            DeleteCustomerCommand = new RelayCommand(async param => await DeleteCustomer(param as Customer));
+
+            _ = LoadCustomers();
         }
 
-        public ObservableCollection<CustomerWithBalance> Customers
+        public ObservableCollection<Customer> Customers
         {
             get => _customers;
             set => SetProperty(ref _customers, value);
         }
 
         public ICommand AddCustomerCommand { get; }
-        public ICommand ViewCustomerCommand { get; }
+        public ICommand EditCustomerCommand { get; }
+        public ICommand DeleteCustomerCommand { get; }
 
-        private async void LoadCustomers()
+        private async Task LoadCustomers()
         {
             try
             {
                 var customers = await _customerService.GetAllCustomersAsync();
-                var customersWithBalance = new List<CustomerWithBalance>();
-
+                
+                // Load balance for each customer
                 foreach (var customer in customers)
                 {
-                    var balance = await _customerService.GetCustomerBalanceAsync(customer.Id);
-                    customersWithBalance.Add(new CustomerWithBalance
-                    {
-                        Id = customer.Id,
-                        FullName = customer.FullName,
-                        Phone = customer.Phone,
-                        Balance = balance
-                    });
+                    customer.Balance = await _customerService.GetCustomerBalanceAsync(customer.Id);
                 }
-
-                Customers = new ObservableCollection<CustomerWithBalance>(customersWithBalance);
+                
+                Customers = new ObservableCollection<Customer>(customers);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading customers: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Error loading customers: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
         private async Task AddCustomer()
         {
-            var dialogViewModel = new SelectCustomerViewModel(_customerService);
-            var dialog = new SelectCustomerDialog(dialogViewModel)
+            try
             {
-                Owner = Application.Current.MainWindow
-            };
+                var dialogViewModel = new EditCustomerViewModel(null, _customerService);
+                var dialog = new Views.EditCustomerDialog(dialogViewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
 
-            if (dialog.ShowDialog() == true)
+                if (dialog.ShowDialog() == true)
+                {
+                    await LoadCustomers();
+                }
+            }
+            catch (Exception ex)
             {
-                LoadCustomers();
+                MessageBox.Show(
+                    $"Error adding customer: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 
-        private void ViewCustomer(CustomerWithBalance? customer)
+        private async Task EditCustomer(Customer? customer)
         {
-            if (customer != null)
+            if (customer == null) return;
+
+            try
             {
-                MessageBox.Show($"Customer details for {customer.FullName}\n\nBalance: PKR {customer.Balance:N2}\n\n(Full detail view TODO)", 
-                    "Customer Details", MessageBoxButton.OK, MessageBoxImage.Information);
+                var dialogViewModel = new EditCustomerViewModel(customer, _customerService);
+                var dialog = new Views.EditCustomerDialog(dialogViewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    await LoadCustomers();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error editing customer: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private async Task DeleteCustomer(Customer? customer)
+        {
+            if (customer == null) return;
+
+            try
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete '{customer.FullName}'?\n\nThis action cannot be undone.",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    await _customerService.DeleteCustomerAsync(customer.Id);
+                    await LoadCustomers();
+
+                    MessageBox.Show(
+                        "Customer deleted successfully.",
+                        "Success",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error deleting customer: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
     }

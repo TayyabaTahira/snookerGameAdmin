@@ -12,6 +12,8 @@
         ResizeMode="NoResize">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
@@ -273,44 +275,21 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Player Input -->
-                        <Grid Grid.Row="0" Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <TextBox x:Name="PlayerNameTextBox"
-                                    Grid.Column="0"
-                                    Height="35"
-                                    Margin="0,0,10,0"
-                                    Background="#0f3460"
-                                    Foreground="White"
-                                    BorderBrush="#3a3a4e"
-                                    BorderThickness="1"
-                                    Padding="8"
-                                    Text="{Binding NewPlayerName, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.InputBindings>
-                                    <KeyBinding Key="Enter" Command="{Binding AddPlayerCommand}"/>
-                                </TextBox.InputBindings>
-                            </TextBox>
-
-                            <Button Grid.Column="1"
-                                   Content="? Add"
-                                   Style="{StaticResource SmallButton}"
-                                   Height="35"
-                                   Padding="12,8"
-                                   Command="{Binding AddPlayerCommand}"/>
-                        </Grid>
+                        <!-- Add Player Button -->
+                        <Button Grid.Row="0"
+                               Content="? Add Player from Customers"
+                               Style="{StaticResource SmallButton}"
+                               Height="35"
+                               Margin="0,0,0,10"
+                               Command="{Binding AddPlayerCommand}"/>
 
                         <!-- Players List -->
                         <ScrollViewer Grid.Row="1" 
                                      VerticalScrollBarVisibility="Auto"
                                      MaxHeight="120">
-                            <ItemsControl ItemsSource="{Binding Players}">
+                            <ItemsControl ItemsSource="{Binding SelectedCustomers}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="#0f3460"
@@ -325,10 +304,16 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <TextBlock Grid.Column="0"
-                                                          Text="{Binding}"
-                                                          Foreground="White"
-                                                          VerticalAlignment="Center"/>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding FullName}"
+                                                              Foreground="White"
+                                                              FontWeight="Bold"
+                                                              VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Phone}"
+                                                              Foreground="#a0a0b0"
+                                                              FontSize="12"
+                                                              Margin="0,2,0,0"/>
+                                                </StackPanel>
 
                                                 <Button Grid.Column="1"
                                                        Content="?"

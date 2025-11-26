@@ -36,53 +36,123 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="EditButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#4caf50"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+        </Style>
+
+        <Style x:Key="DeleteButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#e94560"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
     </Window.Resources>
 
-    <Grid>
+    <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#0f3460" Padding="20">
-            <Grid>
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
                 <TextBlock Text="Customer Management" 
                           FontSize="24" 
                           FontWeight="Bold" 
-                          Foreground="White"/>
-                <Button Content="+ Add Customer"
-                       Style="{StaticResource PrimaryButton}"
-                       Command="{Binding AddCustomerCommand}"
-                       HorizontalAlignment="Right"/>
-            </Grid>
-        </Border>
+                          Foreground="White"
+                          Margin="0,0,0,5"/>
+                <TextBlock Text="Manage customer accounts and balances" 
+                          FontSize="12" 
+                          Foreground="#a0a0b0"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                   Content="? Add Customer"
+                   Style="{StaticResource PrimaryButton}"
+                   Command="{Binding AddCustomerCommand}"/>
+        </Grid>
 
         <!-- Customer List -->
-        <DataGrid Grid.Row="1"
-                 ItemsSource="{Binding Customers}"
-                 AutoGenerateColumns="False"
-                 Background="#1a1a2e"
-                 Foreground="White"
-                 GridLinesVisibility="None"
-                 HeadersVisibility="Column"
-                 CanUserAddRows="False"
-                 IsReadOnly="True"
-                 Margin="20">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="2*"/>
-                <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="*"/>
-                <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat='PKR {0:N2}'}" Width="*"/>
-                <DataGridTemplateColumn Header="Actions" Width="Auto">
-                    <DataGridTemplateColumn.CellTemplate>
+        <Border Grid.Row="1"
+               Background="#16213e"
+               BorderBrush="#3a3a4e"
+               BorderThickness="2"
+               CornerRadius="8"
+               Padding="0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Customers}" Margin="0">
+                    <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Content="View Details" 
-                                   Command="{Binding DataContext.ViewCustomerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                   CommandParameter="{Binding}"/>
+                            <Border Background="#0f3460"
+                                   BorderBrush="#3a3a4e"
+                                   BorderThickness="0,0,0,1"
+                                   Padding="20,15">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Name -->
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding FullName}" 
+                                                  FontSize="16" 
+                                                  FontWeight="Bold"
+                                                  Foreground="White"/>
+                                        <TextBlock Text="{Binding Phone}" 
+                                                  FontSize="12" 
+                                                  Foreground="#a0a0b0"
+                                                  Margin="0,3,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Balance -->
+                                    <TextBlock Grid.Column="1"
+                                              Text="{Binding Balance, StringFormat='PKR {0:N2}'}" 
+                                              FontSize="14" 
+                                              Foreground="#4caf50"
+                                              VerticalAlignment="Center"/>
+
+                                    <!-- Created Date -->
+                                    <TextBlock Grid.Column="2"
+                                              Text="{Binding CreatedAt, StringFormat='d'}" 
+                                              FontSize="12" 
+                                              Foreground="#a0a0b0"
+                                              VerticalAlignment="Center"/>
+
+                                    <!-- Actions -->
+                                    <StackPanel Grid.Column="3" 
+                                               Orientation="Horizontal"
+                                               VerticalAlignment="Center">
+                                        <Button Content="?? Edit"
+                                               Style="{StaticResource EditButton}"
+                                               Command="{Binding DataContext.EditCustomerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"/>
+                                        <Button Content="??? Delete"
+                                               Style="{StaticResource DeleteButton}"
+                                               Command="{Binding DataContext.DeleteCustomerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
                         </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
     </Grid>
 </Window>

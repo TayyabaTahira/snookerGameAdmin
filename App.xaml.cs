@@ -20,6 +20,18 @@ namespace SnookerGameManagementSystem
         public static IServiceProvider? ServiceProvider { get; private set; }
         private IConfiguration? _configuration;
 
+        // Helper method to get DbContext
+        public static SnookerDbContext GetDbContext()
+        {
+            if (ServiceProvider == null)
+            {
+                throw new InvalidOperationException("ServiceProvider is not initialized");
+            }
+
+            var scope = ServiceProvider.CreateScope();
+            return scope.ServiceProvider.GetRequiredService<SnookerDbContext>();
+        }
+
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
