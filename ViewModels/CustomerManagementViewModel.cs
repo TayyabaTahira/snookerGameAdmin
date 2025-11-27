@@ -19,6 +19,7 @@ namespace SnookerGameManagementSystem.ViewModels
             AddCustomerCommand = new RelayCommand(async _ => await AddCustomer());
             EditCustomerCommand = new RelayCommand(async param => await EditCustomer(param as Customer));
             DeleteCustomerCommand = new RelayCommand(async param => await DeleteCustomer(param as Customer));
+            MakePaymentCommand = new RelayCommand(async param => await MakePayment(param as Customer));
 
             _ = LoadCustomers();
         }
@@ -32,6 +33,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public ICommand AddCustomerCommand { get; }
         public ICommand EditCustomerCommand { get; }
         public ICommand DeleteCustomerCommand { get; }
+        public ICommand MakePaymentCommand { get; }
 
         private async Task LoadCustomers()
         {
@@ -137,6 +139,34 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 MessageBox.Show(
                     $"Error deleting customer: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private async Task MakePayment(Customer? customer)
+        {
+            if (customer == null) return;
+
+            try
+            {
+                var ledgerService = new LedgerService(App.GetDbContext());
+                var viewModel = new PaymentEntryViewModel(customer.Id, ledgerService, _customerService);
+                var dialog = new PaymentEntryDialog(viewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    await LoadCustomers();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error processing payment: {ex.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

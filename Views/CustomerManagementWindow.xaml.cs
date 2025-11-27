@@ -9,6 +9,12 @@ namespace SnookerGameManagementSystem.Views
         {
             InitializeComponent();
             DataContext = viewModel;
+            
+            // Ensure proper cleanup
+            Closed += (s, e) =>
+            {
+                DataContext = null;
+            };
         }
     }
 }

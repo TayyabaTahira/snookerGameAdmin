@@ -9,7 +9,7 @@ namespace SnookerGameManagementSystem.Views
         {
             InitializeComponent();
             DataContext = viewModel;
-            SearchBox.Focus();
+            Loaded += (s, e) => Focus();
         }
 
         private void Select_Click(object sender, RoutedEventArgs e)

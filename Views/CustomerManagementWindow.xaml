@@ -37,6 +37,15 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="PaymentButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#2196f3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+        </Style>
+
         <Style x:Key="EditButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#4caf50"/>
@@ -80,7 +89,7 @@
             </StackPanel>
 
             <Button Grid.Column="1"
-                   Content="? Add Customer"
+                   Content="+ Add Customer"
                    Style="{StaticResource PrimaryButton}"
                    Command="{Binding AddCustomerCommand}"/>
         </Grid>
@@ -138,11 +147,15 @@
                                     <StackPanel Grid.Column="3" 
                                                Orientation="Horizontal"
                                                VerticalAlignment="Center">
-                                        <Button Content="?? Edit"
+                                        <Button Content="💰 Pay"
+                                               Style="{StaticResource PaymentButton}"
+                                               Command="{Binding DataContext.MakePaymentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"/>
+                                        <Button Content="✏️ Edit"
                                                Style="{StaticResource EditButton}"
                                                Command="{Binding DataContext.EditCustomerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                CommandParameter="{Binding}"/>
-                                        <Button Content="??? Delete"
+                                        <Button Content="🗑️ Delete"
                                                Style="{StaticResource DeleteButton}"
                                                Command="{Binding DataContext.DeleteCustomerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                CommandParameter="{Binding}"/>

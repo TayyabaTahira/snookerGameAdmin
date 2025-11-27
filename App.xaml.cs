@@ -251,6 +251,7 @@ namespace SnookerGameManagementSystem
                 services.AddTransient<GameRuleService>();
                 services.AddTransient<GameTypeService>();
                 services.AddTransient<FrameService>();
+                services.AddTransient<LedgerService>();
                 System.Diagnostics.Debug.WriteLine("[App] Business services added");
 
                 // ViewModels

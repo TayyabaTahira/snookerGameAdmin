@@ -64,12 +64,22 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 if (SetProperty(ref _players, value))
                 {
-                    OnPropertyChanged(nameof(HasNoPlayers));
-                    OnPropertyChanged(nameof(HasPlayers));
-                    OnPropertyChanged(nameof(CanEndGame));
-                    OnPropertyChanged(nameof(CanNextFrame));
+                    UpdatePlayerRelatedProperties();
                 }
             }
+        }
+
+        private void UpdatePlayerRelatedProperties()
+        {
+            OnPropertyChanged(nameof(HasNoPlayers));
+            OnPropertyChanged(nameof(HasPlayers));
+            OnPropertyChanged(nameof(CanEndGame));
+            OnPropertyChanged(nameof(CanNextFrame));
+            
+            // Force command re-evaluation
+            ((RelayCommand)AddPlayerCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)EndGameCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)NextFrameCommand).RaiseCanExecuteChanged();
         }
 
         public bool HasNoPlayers => Players.Count == 0;
@@ -158,6 +168,15 @@ namespace SnookerGameManagementSystem.ViewModels
                         CustomerId = customer.Id,
                         WinStreak = 0
                     });
+                    
+                    // Update UI properties
+                    UpdatePlayerRelatedProperties();
+                    
+                    MessageBox.Show(
+                        $"{customer.FullName} has been added to the session!",
+                        "Player Added",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)

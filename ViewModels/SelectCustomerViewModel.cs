@@ -14,13 +14,13 @@ namespace SnookerGameManagementSystem.ViewModels
         private string _searchText = string.Empty;
         private string _newCustomerName = string.Empty;
         private string _newCustomerPhone = string.Empty;
+        private RelayCommand? _createCustomerCommand;
 
         public SelectCustomerViewModel(CustomerService customerService)
         {
             _customerService = customerService;
             
             SearchCommand = new RelayCommand(_ => FilterCustomers());
-            CreateCustomerCommand = new RelayCommand(async _ => await CreateCustomer(), _ => CanCreateCustomer);
             
             LoadCustomers();
         }
@@ -63,6 +63,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (SetProperty(ref _newCustomerName, value))
                 {
                     OnPropertyChanged(nameof(CanCreateCustomer));
+                    CreateCustomerCommand?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -77,7 +78,20 @@ namespace SnookerGameManagementSystem.ViewModels
         public bool CanCreateCustomer => !string.IsNullOrWhiteSpace(NewCustomerName);
 
         public ICommand SearchCommand { get; }
-        public ICommand CreateCustomerCommand { get; }
+        
+        public RelayCommand CreateCustomerCommand
+        {
+            get
+            {
+                if (_createCustomerCommand == null)
+                {
+                    _createCustomerCommand = new RelayCommand(
+                        async _ => await CreateCustomer(),
+                        _ => CanCreateCustomer);
+                }
+                return _createCustomerCommand;
+            }
+        }
 
         private async void LoadCustomers()
         {
