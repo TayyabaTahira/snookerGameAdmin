@@ -28,7 +28,8 @@
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="Padding" Value="12"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Height" Value="40"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <!-- ComboBox Style with left-aligned white text and placeholder support -->
@@ -245,7 +246,7 @@
         </StackPanel>
 
         <!-- Form -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" PanningMode="VerticalOnly">
             <StackPanel>
                 <!-- Game Summary -->
                 <Border Background="#16213e"

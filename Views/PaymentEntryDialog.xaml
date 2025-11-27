@@ -250,12 +250,12 @@
                     Padding="20,15"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid>
-                    <TextBlock Text="?? Payment Entry" 
+                    <TextBlock Text="Payment Entry" 
                                FontSize="18" 
                                FontWeight="Bold" 
                                Foreground="White"
                                VerticalAlignment="Center"/>
-                    <Button Content="?" 
+                    <Button Content="X" 
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             Background="Transparent"
