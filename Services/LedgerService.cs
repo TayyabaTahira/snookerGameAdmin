@@ -145,6 +145,20 @@ namespace SnookerGameManagementSystem.Services
 
             return charges - payments;
         }
+
+        public async Task<decimal> GetTotalRevenueAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.LedgerPayments
+                .Where(p => p.ReceivedAt >= startDate && p.ReceivedAt < endDate)
+                .SumAsync(p => p.AmountPk);
+        }
+
+        public async Task<decimal> GetTotalOutstandingCreditAsync()
+        {
+            var totalCharges = await _context.LedgerCharges.SumAsync(c => c.AmountPk);
+            var totalPayments = await _context.LedgerPayments.SumAsync(p => p.AmountPk);
+            return Math.Max(0, totalCharges - totalPayments);
+        }
     }
 
     public class LedgerChargeWithBalance

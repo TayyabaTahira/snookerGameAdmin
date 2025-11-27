@@ -18,8 +18,8 @@
             <Setter Property="BorderBrush" Value="#3a3a4e"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Margin" Value="10"/>
-            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="12"/>
+            <Setter Property="Padding" Value="25"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
@@ -142,7 +142,7 @@
                        Command="{Binding AddTableCommand}"
                        Width="250"
                        Height="200"
-                       Margin="10">
+                       Margin="12">
                     <StackPanel>
                         <TextBlock Text="+" FontSize="72" HorizontalAlignment="Center" Margin="0,20,0,10"/>
                         <TextBlock Text="Add Table" FontSize="16" HorizontalAlignment="Center"/>

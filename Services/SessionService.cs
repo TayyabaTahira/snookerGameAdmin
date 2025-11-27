@@ -97,5 +97,16 @@ namespace SnookerGameManagementSystem.Services
 
             return 1;
         }
+
+        public async Task<List<Frame>> GetFramesByDateRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.Frames
+                .Include(f => f.Participants)
+                    .ThenInclude(p => p.Customer)
+                .Include(f => f.Session)
+                .Where(f => f.StartedAt >= startDate && f.StartedAt < endDate)
+                .OrderByDescending(f => f.StartedAt)
+                .ToListAsync();
+        }
     }
 }

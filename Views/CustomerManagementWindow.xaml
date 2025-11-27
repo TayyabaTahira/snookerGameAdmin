@@ -108,7 +108,7 @@
                             <Border Background="#0f3460"
                                    BorderBrush="#3a3a4e"
                                    BorderThickness="0,0,0,1"
-                                   Padding="20,15">
+                                   Padding="25,18">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="2*"/>

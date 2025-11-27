@@ -26,9 +26,9 @@
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Height" Value="35"/>
+            <Setter Property="Height" Value="40"/>
         </Style>
 
         <!-- ComboBox Style with White Text -->
@@ -220,7 +220,7 @@
 
         <Style TargetType="DataGridCell">
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Padding" Value="12,10"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
@@ -292,9 +292,9 @@
                 <StackPanel>
                     <!-- Customer Info -->
                     <Border Background="{StaticResource DarkBackgroundBrush}" 
-                            Padding="15" 
+                            Padding="20" 
                             CornerRadius="4" 
-                            Margin="0,0,0,20">
+                            Margin="0,0,0,25">
                         <StackPanel>
                             <TextBlock Text="{Binding CustomerName}" 
                                        FontSize="18" 

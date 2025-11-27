@@ -27,7 +27,7 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#3a3a4e"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Padding" Value="16"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Height" Value="40"/>
         </Style>
@@ -273,7 +273,7 @@
         </StackPanel>
 
         <!-- Form -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
             <StackPanel>
                 <!-- Table Name -->
                 <TextBlock Text="Table Name"/>
@@ -296,9 +296,9 @@
                        BorderBrush="#3a3a4e"
                        BorderThickness="2"
                        CornerRadius="6"
-                       Padding="15"
+                       Padding="18"
                        MinHeight="120"
-                       Margin="0,0,0,15">
+                       Margin="0,0,0,20">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -307,7 +307,7 @@
 
                         <!-- Add Player Button -->
                         <Button Grid.Row="0"
-                               Content="? Add Player from Customers"
+                               Content="➕ Add Player from Customers"
                                Style="{StaticResource SmallButton}"
                                Height="35"
                                Margin="0,0,0,10"
@@ -324,8 +324,8 @@
                                                BorderBrush="#3a3a4e"
                                                BorderThickness="1"
                                                CornerRadius="4"
-                                               Padding="10,8"
-                                               Margin="0,0,0,5">
+                                               Padding="12,10"
+                                               Margin="0,0,0,8">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
@@ -344,12 +344,13 @@
                                                 </StackPanel>
 
                                                 <Button Grid.Column="1"
-                                                       Content="?"
+                                                       Content="✕"
                                                        Background="Transparent"
                                                        Foreground="#e94560"
                                                        BorderThickness="0"
                                                        Cursor="Hand"
                                                        Padding="5"
+                                                       FontSize="14"
                                                        Command="{Binding DataContext.RemovePlayerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                        CommandParameter="{Binding}"/>
                                             </Grid>

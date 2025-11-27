@@ -299,16 +299,24 @@ namespace SnookerGameManagementSystem.ViewModels
 
         private void OpenReports()
         {
-            MessageBox.Show(
-                "Reports window will be implemented here.\n\n" +
-                "Features:\n" +
-                "- Daily/Monthly revenue\n" +
-                "- Outstanding balances\n" +
-                "- Top players\n" +
-                "- Frame statistics",
-                "Reports - TODO",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            try
+            {
+                var ledgerService = new LedgerService(App.GetDbContext());
+                var viewModel = new ReportsViewModel(ledgerService, _sessionService, _customerService);
+                var window = new Views.ReportsWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening reports:\n\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
     }
 
