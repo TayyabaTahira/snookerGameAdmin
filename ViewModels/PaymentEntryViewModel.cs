@@ -24,6 +24,7 @@ namespace SnookerGameManagementSystem.ViewModels
         private string? _selectedPaymentMethod;
         private string _customerName = string.Empty;
         private decimal _currentBalance;
+        private RelayCommand? _processPaymentCommand;
 
         public event EventHandler? PaymentProcessed;
 
@@ -39,8 +40,6 @@ namespace SnookerGameManagementSystem.ViewModels
             };
 
             _selectedPaymentMethod = "Cash";
-
-            ProcessPaymentCommand = new RelayCommand(async _ => await ProcessPaymentAsync(), _ => CanProcessPayment);
 
             // Load customer info
             LoadCustomerInfoAsync();
@@ -92,6 +91,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (SetProperty(ref _paymentAmount, value))
                 {
                     OnPropertyChanged(nameof(CanProcessPayment));
+                    ProcessPaymentCommand?.RaiseCanExecuteChanged();
                     _ = UpdateAllocationPreviewAsync();
                 }
             }
@@ -105,7 +105,19 @@ namespace SnookerGameManagementSystem.ViewModels
 
         public bool CanProcessPayment => PaymentAmount > 0;
 
-        public ICommand ProcessPaymentCommand { get; }
+        public RelayCommand ProcessPaymentCommand
+        {
+            get
+            {
+                if (_processPaymentCommand == null)
+                {
+                    _processPaymentCommand = new RelayCommand(
+                        async _ => await ProcessPaymentAsync(),
+                        _ => CanProcessPayment);
+                }
+                return _processPaymentCommand;
+            }
+        }
 
         public bool DialogResult { get; set; }
 
