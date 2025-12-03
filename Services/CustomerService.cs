@@ -73,15 +73,28 @@ namespace SnookerGameManagementSystem.Services
 
         public async Task<decimal> GetCustomerBalanceAsync(Guid customerId)
         {
+            // Get all charges for this customer
             var charges = await _context.LedgerCharges
                 .Where(c => c.CustomerId == customerId)
-                .SumAsync(c => c.AmountPk);
+                .ToListAsync();
 
-            var payments = await _context.LedgerPayments
-                .Where(p => p.CustomerId == customerId)
-                .SumAsync(p => p.AmountPk);
+            decimal totalOutstanding = 0;
 
-            return charges - payments;
+            // For each charge, calculate how much is still unpaid
+            foreach (var charge in charges)
+            {
+                var alreadyPaid = await _context.PaymentAllocations
+                    .Where(pa => pa.ChargeId == charge.Id)
+                    .SumAsync(pa => (decimal?)pa.AllocatedAmountPk) ?? 0;
+
+                var outstanding = charge.AmountPk - alreadyPaid;
+                if (outstanding > 0)
+                {
+                    totalOutstanding += outstanding;
+                }
+            }
+
+            return totalOutstanding;
         }
     }
 }

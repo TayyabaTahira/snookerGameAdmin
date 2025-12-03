@@ -118,11 +118,6 @@
                 <!-- Rules Section -->
                 <TextBlock Text="Default Rule" FontWeight="Bold" Margin="0,10,0,10"/>
                 
-                <!-- Description -->
-                <TextBlock Text="Rule Description *"/>
-                <TextBox Text="{Binding RuleDescription, UpdateSourceTrigger=PropertyChanged}"
-                        Margin="0,0,0,15"/>
-
                 <!-- Base Rate -->
                 <TextBlock Text="Base Rate (PKR) *"/>
                 <TextBox Text="{Binding BaseRate, UpdateSourceTrigger=PropertyChanged}"
@@ -152,6 +147,12 @@
                         <TextBlock Text="Overtime Rate: Additional charge per minute beyond normal duration"
                                   FontSize="12"
                                   Foreground="#a0a0b0"
+                                  TextWrapping="Wrap"
+                                  Margin="0,0,0,3"/>
+                        <TextBlock Text="Note: Rule description will be auto-generated based on settings"
+                                  FontSize="12"
+                                  Foreground="#4caf50"
+                                  FontStyle="Italic"
                                   TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>

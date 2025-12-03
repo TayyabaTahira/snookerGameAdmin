@@ -326,8 +326,21 @@
                          SelectedItem="{Binding SelectedPayerMode}"
                          DisplayMemberPath="Display"
                          SelectedValuePath="Value"
-                         Margin="0,0,0,15"
+                         Margin="0,0,0,10"
                          Tag="Select Who Pays"/>
+
+                <!-- Who Will Pay Display -->
+                <Border Background="#16213e"
+                       BorderBrush="#2196f3"
+                       BorderThickness="2"
+                       CornerRadius="6"
+                       Padding="15"
+                       Margin="0,0,0,15">
+                    <TextBlock Text="{Binding WhoWillPayDisplay}" 
+                              FontSize="13" 
+                              Foreground="#2196f3"
+                              TextWrapping="Wrap"/>
+                </Border>
 
                 <!-- Payment Status -->
                 <TextBlock Text="Payment Status" FontWeight="Bold" Margin="0,10,0,5"/>

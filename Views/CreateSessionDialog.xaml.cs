@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using SnookerGameManagementSystem.ViewModels;
 
 namespace SnookerGameManagementSystem.Views
@@ -21,6 +22,18 @@ namespace SnookerGameManagementSystem.Views
         {
             DialogResult = false;
             Close();
+        }
+
+        private void ComboBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            e.Handled = true;
+            var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+            {
+                RoutedEvent = MouseWheelEvent,
+                Source = sender
+            };
+            var parent = ((System.Windows.Controls.Control)sender).Parent as UIElement;
+            parent?.RaiseEvent(eventArg);
         }
     }
 }

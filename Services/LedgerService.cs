@@ -46,58 +46,94 @@ namespace SnookerGameManagementSystem.Services
 
         public async Task<bool> ProcessPaymentAsync(Guid customerId, decimal amount, string method)
         {
-            try
+            System.Diagnostics.Debug.WriteLine($"[LedgerService] ========== ProcessPaymentAsync START ==========");
+            System.Diagnostics.Debug.WriteLine($"[LedgerService] Customer ID: {customerId}");
+            System.Diagnostics.Debug.WriteLine($"[LedgerService] Amount: {amount}");
+            System.Diagnostics.Debug.WriteLine($"[LedgerService] Method: {method}");
+            
+            // Use execution strategy to wrap the transaction
+            var strategy = _context.Database.CreateExecutionStrategy();
+            
+            return await strategy.ExecuteAsync(async () =>
             {
-                // 1. Create payment record
-                var payment = new LedgerPayment
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    CustomerId = customerId,
-                    AmountPk = amount,
-                    Method = method,
-                    ReceivedAt = DateTime.Now
-                };
-                _context.LedgerPayments.Add(payment);
-                await _context.SaveChangesAsync();
-
-                // 2. Get unpaid charges (FIFO)
-                var unpaidCharges = await GetUnpaidChargesAsync(customerId);
-
-                // 3. Allocate payment FIFO
-                decimal remainingPayment = amount;
-
-                foreach (var chargeInfo in unpaidCharges)
-                {
-                    if (remainingPayment <= 0) break;
-
-                    var chargeRemaining = chargeInfo.RemainingAmount;
-
-                    if (chargeRemaining <= 0) continue;
-
-                    // Allocate what we can to this charge
-                    var toAllocate = Math.Min(remainingPayment, chargeRemaining);
-
-                    var allocation = new PaymentAllocation
+                    // 1. Create payment record
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Creating payment record...");
+                    var payment = new LedgerPayment
                     {
-                        PaymentId = payment.Id,
-                        ChargeId = chargeInfo.Charge.Id,
-                        AllocatedAmountPk = toAllocate,
-                        CreatedAt = DateTime.Now
+                        Id = Guid.NewGuid(),
+                        CustomerId = customerId,
+                        AmountPk = amount,
+                        Method = method,
+                        ReceivedAt = DateTime.Now
                     };
-                    _context.PaymentAllocations.Add(allocation);
+                    _context.LedgerPayments.Add(payment);
+                    await _context.SaveChangesAsync();
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Payment record created with ID: {payment.Id}");
 
-                    remainingPayment -= toAllocate;
+                    // 2. Get unpaid charges (FIFO)
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Getting unpaid charges...");
+                    var unpaidCharges = await GetUnpaidChargesAsync(customerId);
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Found {unpaidCharges.Count} unpaid charges");
 
-                    // Update frame pay status
-                    await UpdateFramePayStatusAsync(chargeInfo.Charge.FrameId);
+                    // 3. Allocate payment FIFO
+                    decimal remainingPayment = amount;
+                    int allocationCount = 0;
+
+                    foreach (var chargeInfo in unpaidCharges)
+                    {
+                        if (remainingPayment <= 0) break;
+
+                        var chargeRemaining = chargeInfo.RemainingAmount;
+                        System.Diagnostics.Debug.WriteLine($"[LedgerService] Processing charge {chargeInfo.Charge.Id}, remaining: {chargeRemaining}");
+
+                        if (chargeRemaining <= 0) continue;
+
+                        // Allocate what we can to this charge
+                        var toAllocate = Math.Min(remainingPayment, chargeRemaining);
+
+                        var allocation = new PaymentAllocation
+                        {
+                            Id = Guid.NewGuid(),
+                            PaymentId = payment.Id,
+                            ChargeId = chargeInfo.Charge.Id,
+                            AllocatedAmountPk = toAllocate,
+                            CreatedAt = DateTime.Now
+                        };
+                        _context.PaymentAllocations.Add(allocation);
+                        allocationCount++;
+                        System.Diagnostics.Debug.WriteLine($"[LedgerService] Allocated {toAllocate} to charge {chargeInfo.Charge.Id}");
+
+                        remainingPayment -= toAllocate;
+
+                        // Update frame pay status
+                        await UpdateFramePayStatusAsync(chargeInfo.Charge.FrameId);
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Created {allocationCount} allocations");
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Saving changes...");
+                    await _context.SaveChangesAsync();
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Committing transaction...");
+                    await transaction.CommitAsync();
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] ========== ProcessPaymentAsync SUCCESS ==========");
+                    return true;
                 }
-
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] ========== ProcessPaymentAsync FAILED ==========");
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[LedgerService] Stack trace: {ex.StackTrace}");
+                    if (ex.InnerException != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[LedgerService] Inner exception: {ex.InnerException.Message}");
+                        System.Diagnostics.Debug.WriteLine($"[LedgerService] Inner stack: {ex.InnerException.StackTrace}");
+                    }
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
         }
 
         private async Task UpdateFramePayStatusAsync(Guid? frameId)

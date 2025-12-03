@@ -163,6 +163,11 @@ namespace SnookerGameManagementSystem.ViewModels
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Starting payment processing...");
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Customer ID: {_customerId}");
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Amount: {PaymentAmount}");
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Method: {_selectedPaymentMethod}");
+                
                 var result = await _ledgerService.ProcessPaymentAsync(
                     _customerId,
                     PaymentAmount,
@@ -170,6 +175,8 @@ namespace SnookerGameManagementSystem.ViewModels
 
                 if (result)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Payment processed successfully!");
+                    
                     MessageBox.Show(
                         $"Payment of PKR {PaymentAmount:N2} processed successfully!",
                         "Success",
@@ -181,6 +188,8 @@ namespace SnookerGameManagementSystem.ViewModels
                 }
                 else
                 {
+                    System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Payment processing returned false");
+                    
                     MessageBox.Show(
                         "Failed to process payment. Please try again.",
                         "Error",
@@ -190,9 +199,16 @@ namespace SnookerGameManagementSystem.ViewModels
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Payment processing exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Inner exception: {ex.InnerException.Message}");
+                }
+                
                 MessageBox.Show(
-                    $"Error processing payment: {ex.Message}",
-                    "Error",
+                    $"Error processing payment:\n\n{ex.Message}\n\n{(ex.InnerException != null ? "Inner: " + ex.InnerException.Message : "")}",
+                    "Payment Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }

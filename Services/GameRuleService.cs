@@ -29,16 +29,15 @@ namespace SnookerGameManagementSystem.Services
 
         public async Task<GameRule> CreateGameRuleAsync(
             Guid gameTypeId, 
-            string description, 
             decimal baseRate, 
             decimal overtimeRate)
         {
             var gameRule = new GameRule
             {
                 GameTypeId = gameTypeId,
-                Description = description,
                 BaseRate = baseRate,
-                OvertimeRate = overtimeRate
+                OvertimeRate = overtimeRate,
+                DefaultPayerMode = PayerMode.LOSER // Default payer mode
             };
 
             _context.GameRules.Add(gameRule);

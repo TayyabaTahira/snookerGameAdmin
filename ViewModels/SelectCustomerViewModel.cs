@@ -25,6 +25,8 @@ namespace SnookerGameManagementSystem.ViewModels
             LoadCustomers();
         }
 
+        public event EventHandler? CustomerCreatedAndSelected;
+
         public ObservableCollection<Customer> FilteredCustomers
         {
             get => _filteredCustomers;
@@ -138,6 +140,9 @@ namespace SnookerGameManagementSystem.ViewModels
                 // Clear inputs
                 NewCustomerName = string.Empty;
                 NewCustomerPhone = string.Empty;
+
+                // Notify that customer was created and selected
+                CustomerCreatedAndSelected?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {

@@ -121,7 +121,13 @@ namespace SnookerGameManagementSystem.ViewModels
         public PayerModeOption? SelectedPayerMode
         {
             get => _selectedPayerMode;
-            set => SetProperty(ref _selectedPayerMode, value);
+            set
+            {
+                if (SetProperty(ref _selectedPayerMode, value))
+                {
+                    OnPropertyChanged(nameof(WhoWillPayDisplay));
+                }
+            }
         }
 
         public ObservableCollection<PayStatusOption> PayStatuses { get; }
@@ -134,5 +140,22 @@ namespace SnookerGameManagementSystem.ViewModels
 
         public PayerMode PayerMode => _selectedPayerMode?.Value ?? PayerMode.LOSER;
         public PayStatus PayStatus => _selectedPayStatus?.Value ?? PayStatus.UNPAID;
+
+        public string WhoWillPayDisplay
+        {
+            get
+            {
+                var mode = _selectedPayerMode?.Value ?? PayerMode.LOSER;
+                var playerCount = _session.Frames.LastOrDefault()?.Participants.Count ?? 0;
+                
+                return mode switch
+                {
+                    PayerMode.LOSER => "The losing player will be charged the full amount",
+                    PayerMode.SPLIT => $"Amount will be split equally among {playerCount} players",
+                    PayerMode.EACH => $"Each of the {playerCount} players will be charged the full amount",
+                    _ => "Payment mode not selected"
+                };
+            }
+        }
     }
 }

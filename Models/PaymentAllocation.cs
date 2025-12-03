@@ -8,6 +8,11 @@ namespace SnookerGameManagementSystem.Models
         public Guid PaymentId { get; set; }
         public Guid ChargeId { get; set; }
         public decimal AllocatedAmountPk { get; set; }
+        public decimal AllocatedAmount
+        {
+            get => AllocatedAmountPk;
+            set => AllocatedAmountPk = value;
+        }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         
         // Navigation properties

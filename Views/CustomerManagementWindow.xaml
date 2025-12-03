@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:SnookerGameManagementSystem.Converters"
         mc:Ignorable="d"
         Title="Customer Management" 
         Height="700" 
@@ -11,6 +12,8 @@
         Background="#1a1a2e">
 
     <Window.Resources>
+        <converters:GreaterThanConverter x:Key="GreaterThanConverter"/>
+        
         <Style x:Key="PrimaryButton" TargetType="Button">
             <Setter Property="Background" Value="#e94560"/>
             <Setter Property="Foreground" Value="White"/>
@@ -62,10 +65,30 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="8,4"/>
         </Style>
+
+        <Style x:Key="HistoryButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#2196f3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+        </Style>
+
+        <Style x:Key="SearchTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="#16213e"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#3a3a4e"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="40"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="30">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -83,7 +106,7 @@
                           FontWeight="Bold" 
                           Foreground="White"
                           Margin="0,0,0,5"/>
-                <TextBlock Text="Manage customer accounts and balances" 
+                <TextBlock Text="Manage customer accounts and outstanding amounts" 
                           FontSize="12" 
                           Foreground="#a0a0b0"/>
             </StackPanel>
@@ -94,15 +117,48 @@
                    Command="{Binding AddCustomerCommand}"/>
         </Grid>
 
+        <!-- Search Bar -->
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <TextBox Style="{StaticResource SearchTextBox}"
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                    VerticalContentAlignment="Center">
+                <TextBox.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="6"/>
+                    </Style>
+                </TextBox.Resources>
+            </TextBox>
+            <TextBlock Text="🔍 Search customers by name or phone..."
+                      FontSize="14"
+                      Foreground="#6a6a7e"
+                      IsHitTestVisible="False"
+                      VerticalAlignment="Center"
+                      Margin="15,0,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SearchText}" Value="">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding SearchText}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
+
         <!-- Customer List -->
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                Background="#16213e"
                BorderBrush="#3a3a4e"
                BorderThickness="2"
                CornerRadius="8"
                Padding="0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Customers}" Margin="0">
+                <ItemsControl ItemsSource="{Binding FilteredCustomers}" Margin="0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#0f3460"
@@ -129,12 +185,39 @@
                                                   Margin="0,3,0,0"/>
                                     </StackPanel>
 
-                                    <!-- Balance -->
-                                    <TextBlock Grid.Column="1"
-                                              Text="{Binding Balance, StringFormat='PKR {0:N2}'}" 
-                                              FontSize="14" 
-                                              Foreground="#4caf50"
-                                              VerticalAlignment="Center"/>
+                                    <!-- Outstanding Amount -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock FontSize="14" 
+                                                  FontWeight="SemiBold"
+                                                  VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#4caf50"/>
+                                                    <Setter Property="Text" Value="{Binding Balance, StringFormat='PKR {0:N2}'}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Balance, Converter={StaticResource GreaterThanConverter}, ConverterParameter=0}" Value="True">
+                                                            <Setter Property="Foreground" Value="#ff9800"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock FontSize="10" 
+                                                  Foreground="#a0a0b0"
+                                                  Text="(pending payment)"
+                                                  Margin="0,2,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Balance, Converter={StaticResource GreaterThanConverter}, ConverterParameter=0}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
 
                                     <!-- Created Date -->
                                     <TextBlock Grid.Column="2"
@@ -147,6 +230,10 @@
                                     <StackPanel Grid.Column="3" 
                                                Orientation="Horizontal"
                                                VerticalAlignment="Center">
+                                        <Button Content="📜 History"
+                                               Style="{StaticResource HistoryButton}"
+                                               Command="{Binding DataContext.ViewHistoryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"/>
                                         <Button Content="💰 Pay"
                                                Style="{StaticResource PaymentButton}"
                                                Command="{Binding DataContext.MakePaymentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"

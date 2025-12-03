@@ -15,6 +15,7 @@ namespace SnookerGameManagementSystem.ViewModels
         private readonly CustomerService _customerService;
         private ObservableCollection<SessionTileViewModel> _sessions = new();
         private bool _isLoading;
+        private System.Windows.Threading.DispatcherTimer? _timerUpdateTimer;
 
         public DashboardViewModel(
             SessionService sessionService, 
@@ -35,6 +36,12 @@ namespace SnookerGameManagementSystem.ViewModels
             GameTypesCommand = new RelayCommand(_ => OpenGameTypes());
             CustomersCommand = new RelayCommand(_ => OpenCustomers());
             ReportsCommand = new RelayCommand(_ => OpenReports());
+            
+            // Setup timer to update elapsed time every second
+            _timerUpdateTimer = new System.Windows.Threading.DispatcherTimer();
+            _timerUpdateTimer.Interval = TimeSpan.FromSeconds(1);
+            _timerUpdateTimer.Tick += (s, e) => UpdateSessionTimers();
+            _timerUpdateTimer.Start();
             
             System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Commands initialized");
             
@@ -62,6 +69,14 @@ namespace SnookerGameManagementSystem.ViewModels
             });
             
             System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Constructor completed");
+        }
+
+        private void UpdateSessionTimers()
+        {
+            foreach (var session in Sessions)
+            {
+                session.RefreshElapsedTime();
+            }
         }
 
         public ObservableCollection<SessionTileViewModel> Sessions
@@ -352,5 +367,11 @@ namespace SnookerGameManagementSystem.ViewModels
         }
 
         public ICommand? OpenCommand { get; set; }
+
+        public void RefreshElapsedTime()
+        {
+            OnPropertyChanged(nameof(ElapsedTime));
+            OnPropertyChanged(nameof(ElapsedTimeDisplay));
+        }
     }
 }

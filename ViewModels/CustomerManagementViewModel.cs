@@ -11,6 +11,8 @@ namespace SnookerGameManagementSystem.ViewModels
     {
         private readonly CustomerService _customerService;
         private ObservableCollection<Customer> _customers = new();
+        private ObservableCollection<Customer> _filteredCustomers = new();
+        private string _searchText = string.Empty;
 
         public CustomerManagementViewModel(CustomerService customerService)
         {
@@ -20,6 +22,7 @@ namespace SnookerGameManagementSystem.ViewModels
             EditCustomerCommand = new RelayCommand(async param => await EditCustomer(param as Customer));
             DeleteCustomerCommand = new RelayCommand(async param => await DeleteCustomer(param as Customer));
             MakePaymentCommand = new RelayCommand(async param => await MakePayment(param as Customer));
+            ViewHistoryCommand = new RelayCommand(param => ViewHistory(param as Customer));
 
             _ = LoadCustomers();
         }
@@ -30,10 +33,46 @@ namespace SnookerGameManagementSystem.ViewModels
             set => SetProperty(ref _customers, value);
         }
 
+        public ObservableCollection<Customer> FilteredCustomers
+        {
+            get => _filteredCustomers;
+            set => SetProperty(ref _filteredCustomers, value);
+        }
+
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (SetProperty(ref _searchText, value))
+                {
+                    FilterCustomers();
+                }
+            }
+        }
+
         public ICommand AddCustomerCommand { get; }
         public ICommand EditCustomerCommand { get; }
         public ICommand DeleteCustomerCommand { get; }
         public ICommand MakePaymentCommand { get; }
+        public ICommand ViewHistoryCommand { get; }
+
+        private void FilterCustomers()
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                FilteredCustomers = new ObservableCollection<Customer>(Customers);
+            }
+            else
+            {
+                var searchLower = SearchText.ToLower();
+                var filtered = Customers.Where(c =>
+                    c.FullName.ToLower().Contains(searchLower) ||
+                    (c.Phone != null && c.Phone.Contains(searchLower))
+                ).ToList();
+                FilteredCustomers = new ObservableCollection<Customer>(filtered);
+            }
+        }
 
         private async Task LoadCustomers()
         {
@@ -48,6 +87,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 }
                 
                 Customers = new ObservableCollection<Customer>(customers);
+                FilterCustomers();
             }
             catch (Exception ex)
             {
@@ -167,6 +207,30 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 MessageBox.Show(
                     $"Error processing payment: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ViewHistory(Customer? customer)
+        {
+            if (customer == null) return;
+
+            try
+            {
+                var ledgerService = new LedgerService(App.GetDbContext());
+                var viewModel = new CustomerHistoryViewModel(customer, ledgerService);
+                var window = new CustomerHistoryWindow(viewModel)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error viewing history: {ex.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

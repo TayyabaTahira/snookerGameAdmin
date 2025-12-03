@@ -265,6 +265,9 @@ namespace SnookerGameManagementSystem.Data
                 entity.Property(e => e.AllocatedAmountPk).HasColumnName("allocated_amount_pk").HasColumnType("decimal(10,2)").IsRequired();
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
 
+                // Ignore computed property
+                entity.Ignore(e => e.AllocatedAmount);
+
                 entity.HasOne(e => e.Payment)
                     .WithMany(p => p.PaymentAllocations)
                     .HasForeignKey(e => e.PaymentId)

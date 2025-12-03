@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Reports &amp; Analytics" 
-        Height="700" 
-        Width="1000"
+        Height="900" 
+        Width="1400"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e"
         ResizeMode="CanResize">
@@ -78,178 +78,191 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="White"/>
         </Style>
+
+        <!-- Hidden ScrollBar Style -->
+        <Style x:Key="HiddenScrollBar" TargetType="ScrollBar">
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
     </Window.Resources>
 
-    <Grid Margin="25">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  PanningMode="VerticalOnly">
+        <ScrollViewer.Resources>
+            <Style TargetType="ScrollBar" BasedOn="{StaticResource HiddenScrollBar}"/>
+        </ScrollViewer.Resources>
+        <Grid Margin="25">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,30">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
-                <TextBlock Text="📊 Reports &amp; Analytics" 
-                          FontSize="28" 
-                          FontWeight="Bold" 
-                          Foreground="White"/>
-                <TextBlock Text="Revenue, games, and player statistics" 
-                          FontSize="14" 
-                          Foreground="#a0a0b0"
-                          Margin="0,8,0,0"/>
-            </StackPanel>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="📊 Reports &amp; Analytics" 
+                              FontSize="28" 
+                              FontWeight="Bold" 
+                              Foreground="White"/>
+                    <TextBlock Text="Revenue, games, and player statistics" 
+                              FontSize="14" 
+                              Foreground="#a0a0b0"
+                              Margin="0,8,0,0"/>
+                </StackPanel>
 
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
-                <DatePicker SelectedDate="{Binding SelectedDate}"
-                           Background="White"
-                           Foreground="Black"
-                           BorderBrush="#3a3a4e"
-                           BorderThickness="2"
-                           Padding="15"
-                           Height="50"
-                           Width="220"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           VerticalContentAlignment="Center">
-                    <DatePicker.Resources>
-                        <Style TargetType="DatePickerTextBox">
-                            <Setter Property="Foreground" Value="Black"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter Property="Background" Value="White"/>
-                        </Style>
-                    </DatePicker.Resources>
-                </DatePicker>
-            </StackPanel>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
+                    <DatePicker SelectedDate="{Binding SelectedDate}"
+                               Background="White"
+                               Foreground="Black"
+                               BorderBrush="#3a3a4e"
+                               BorderThickness="2"
+                               Padding="15"
+                               Height="50"
+                               Width="220"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               VerticalContentAlignment="Center">
+                        <DatePicker.Resources>
+                            <Style TargetType="DatePickerTextBox">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="Background" Value="White"/>
+                            </Style>
+                        </DatePicker.Resources>
+                    </DatePicker>
+                </StackPanel>
+            </Grid>
+
+            <!-- Statistics Cards -->
+            <Grid Grid.Row="1" Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Today's Revenue -->
+                <Border Grid.Column="0" Style="{StaticResource StatCard}">
+                    <StackPanel>
+                        <TextBlock Text="💰 Today's Revenue" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding TodayRevenue, StringFormat='PKR {0:N2}'}" 
+                                  Style="{StaticResource ValueText}"
+                                  Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding TodayGames, StringFormat='{}{0} games'}" 
+                                  Style="{StaticResource LabelText}"
+                                  Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Month's Revenue -->
+                <Border Grid.Column="1" Style="{StaticResource StatCard}">
+                    <StackPanel>
+                        <TextBlock Text="📅 This Month" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding MonthRevenue, StringFormat='PKR {0:N2}'}" 
+                                  Style="{StaticResource ValueText}"
+                                  Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding MonthGames, StringFormat='{}{0} games'}" 
+                                  Style="{StaticResource LabelText}"
+                                  Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Outstanding Credit -->
+                <Border Grid.Column="2" Style="{StaticResource StatCard}">
+                    <StackPanel>
+                        <TextBlock Text="⚠️ Outstanding Credit" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding OutstandingCredit, StringFormat='PKR {0:N2}'}" 
+                                  Style="{StaticResource ValueText}"
+                                  Foreground="#e94560"
+                                  Margin="0,8,0,0"/>
+                        <TextBlock Text="Unpaid balances" 
+                                  Style="{StaticResource LabelText}"
+                                  Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Average per Game -->
+                <Border Grid.Column="3" Style="{StaticResource StatCard}">
+                    <StackPanel>
+                        <TextBlock Text="📈 Avg per Game" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding AveragePerGame, StringFormat='PKR {0:N0}'}" 
+                                  Style="{StaticResource ValueText}"
+                                  Margin="0,8,0,0"/>
+                        <TextBlock Text="Today's average" 
+                                  Style="{StaticResource LabelText}"
+                                  Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Details Section -->
+            <Grid Grid.Row="2" Margin="0,0,0,25">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Top Players -->
+                <Border Grid.Column="0" Style="{StaticResource StatCard}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="🏆 Top Players" Style="{StaticResource HeaderText}"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450">
+                            <DataGrid ItemsSource="{Binding TopPlayers}"
+                                     Margin="0" Padding="10">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                                    <DataGridTextColumn Header="Games" Binding="{Binding GamesPlayed}" Width="70"/>
+                                    <DataGridTextColumn Header="Won" Binding="{Binding GamesWon}" Width="60"/>
+                                    <DataGridTextColumn Header="Win %" Binding="{Binding WinRateDisplay}" Width="70"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Games -->
+                <Border Grid.Column="1" Style="{StaticResource StatCard}" Margin="12,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="🎮 Recent Games" Style="{StaticResource HeaderText}"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450">
+                            <DataGrid ItemsSource="{Binding RecentGames}"
+                                     Margin="0" Padding="10">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="120"/>
+                                    <DataGridTextColumn Header="Players" Binding="{Binding Players}" Width="2*"/>
+                                    <DataGridTextColumn Header="Winner" Binding="{Binding Winner}" Width="*"/>
+                                    <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" Width="110"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Loading Overlay -->
+            <Border Grid.RowSpan="3" 
+                   Background="#AA000000" 
+                   Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="⏳ Loading Reports..." 
+                              FontSize="20" 
+                              Foreground="White"
+                              HorizontalAlignment="Center"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                Width="200" 
+                                Height="4"
+                                Margin="0,20,0,0"
+                                Foreground="#e94560"/>
+                </StackPanel>
+            </Border>
         </Grid>
-
-        <!-- Statistics Cards -->
-        <Grid Grid.Row="1" Margin="0,0,0,25">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Today's Revenue -->
-            <Border Grid.Column="0" Style="{StaticResource StatCard}">
-                <StackPanel>
-                    <TextBlock Text="💰 Today's Revenue" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding TodayRevenue, StringFormat='PKR {0:N2}'}" 
-                              Style="{StaticResource ValueText}"
-                              Margin="0,8,0,0"/>
-                    <TextBlock Text="{Binding TodayGames, StringFormat='{}{0} games'}" 
-                              Style="{StaticResource LabelText}"
-                              Margin="0,8,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Month's Revenue -->
-            <Border Grid.Column="1" Style="{StaticResource StatCard}">
-                <StackPanel>
-                    <TextBlock Text="📅 This Month" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding MonthRevenue, StringFormat='PKR {0:N2}'}" 
-                              Style="{StaticResource ValueText}"
-                              Margin="0,8,0,0"/>
-                    <TextBlock Text="{Binding MonthGames, StringFormat='{}{0} games'}" 
-                              Style="{StaticResource LabelText}"
-                              Margin="0,8,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Outstanding Credit -->
-            <Border Grid.Column="2" Style="{StaticResource StatCard}">
-                <StackPanel>
-                    <TextBlock Text="⚠️ Outstanding Credit" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding OutstandingCredit, StringFormat='PKR {0:N2}'}" 
-                              Style="{StaticResource ValueText}"
-                              Foreground="#e94560"
-                              Margin="0,8,0,0"/>
-                    <TextBlock Text="Unpaid balances" 
-                              Style="{StaticResource LabelText}"
-                              Margin="0,8,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Average per Game -->
-            <Border Grid.Column="3" Style="{StaticResource StatCard}">
-                <StackPanel>
-                    <TextBlock Text="📈 Avg per Game" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding AveragePerGame, StringFormat='PKR {0:N0}'}" 
-                              Style="{StaticResource ValueText}"
-                              Margin="0,8,0,0"/>
-                    <TextBlock Text="Today's average" 
-                              Style="{StaticResource LabelText}"
-                              Margin="0,8,0,0"/>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Details Section -->
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*"/>
-                <ColumnDefinition Width="2*"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- Top Players -->
-            <Border Grid.Column="0" Style="{StaticResource StatCard}" Margin="0,0,12,0">
-                <StackPanel>
-                    <TextBlock Text="🏆 Top Players" Style="{StaticResource HeaderText}"/>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450">
-                        <DataGrid ItemsSource="{Binding TopPlayers}"
-                                 Margin="0" Padding="10">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                                <DataGridTextColumn Header="Games" Binding="{Binding GamesPlayed}" Width="70"/>
-                                <DataGridTextColumn Header="Won" Binding="{Binding GamesWon}" Width="60"/>
-                                <DataGridTextColumn Header="Win %" Binding="{Binding WinRateDisplay}" Width="70"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </ScrollViewer>
-                </StackPanel>
-            </Border>
-
-            <!-- Recent Games -->
-            <Border Grid.Column="1" Style="{StaticResource StatCard}" Margin="12,0,0,0">
-                <StackPanel>
-                    <TextBlock Text="🎮 Recent Games" Style="{StaticResource HeaderText}"/>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450">
-                        <DataGrid ItemsSource="{Binding RecentGames}"
-                                 Margin="0" Padding="10">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="120"/>
-                                <DataGridTextColumn Header="Players" Binding="{Binding Players}" Width="2*"/>
-                                <DataGridTextColumn Header="Winner" Binding="{Binding Winner}" Width="*"/>
-                                <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" Width="110"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </ScrollViewer>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Loading Overlay -->
-        <Border Grid.RowSpan="3" 
-               Background="#AA000000" 
-               Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="⏳ Loading Reports..." 
-                          FontSize="20" 
-                          Foreground="White"
-                          HorizontalAlignment="Center"/>
-                <ProgressBar IsIndeterminate="True" 
-                            Width="200" 
-                            Height="4"
-                            Margin="0,20,0,0"
-                            Foreground="#e94560"/>
-            </StackPanel>
-        </Border>
-    </Grid>
+    </ScrollViewer>
 </Window>

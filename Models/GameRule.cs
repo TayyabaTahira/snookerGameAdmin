@@ -22,8 +22,40 @@ namespace SnookerGameManagementSystem.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public Guid GameTypeId { get; set; }
         
-        // Display/description fields (not mapped to DB)
-        public string Description { get; set; } = string.Empty;
+        // Display/description field - computed from rule properties
+        public string Description 
+        { 
+            get
+            {
+                // Generate description based on payer mode
+                var payerDesc = DefaultPayerMode switch
+                {
+                    PayerMode.LOSER => "Loser pays",
+                    PayerMode.SPLIT => "Split between both players",
+                    PayerMode.EACH => "Each player pays their own",
+                    PayerMode.CUSTOM => "Custom payment allocation",
+                    _ => "Payment mode not set"
+                };
+
+                // Add time limit info if available
+                if (TimeLimitMinutes.HasValue && TimeLimitMinutes.Value > 0)
+                {
+                    payerDesc += $" • {TimeLimitMinutes.Value} min limit";
+                    
+                    // Add overtime info
+                    if (OvertimeMode == OvertimeMode.PER_MINUTE && OvertimeRatePkMin.HasValue && OvertimeRatePkMin.Value > 0)
+                    {
+                        payerDesc += $" • PKR {OvertimeRatePkMin.Value:N2}/min overtime";
+                    }
+                    else if (OvertimeMode == OvertimeMode.LUMP_SUM && OvertimeLumpSumPk.HasValue && OvertimeLumpSumPk.Value > 0)
+                    {
+                        payerDesc += $" • PKR {OvertimeLumpSumPk.Value:N2} lump sum";
+                    }
+                }
+
+                return payerDesc;
+            }
+        }
         
         // Database mapped fields
         public decimal BaseRatePk { get; set; }

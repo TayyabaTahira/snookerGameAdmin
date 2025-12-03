@@ -10,7 +10,6 @@ namespace SnookerGameManagementSystem.ViewModels
         private readonly GameTypeService _gameTypeService;
         private readonly GameRuleService _gameRuleService;
         private string _gameTypeName = string.Empty;
-        private string _ruleDescription = string.Empty;
         private decimal _baseRate;
         private decimal _overtimeRate;
 
@@ -28,7 +27,6 @@ namespace SnookerGameManagementSystem.ViewModels
                 var firstRule = _existingGameType.GameRules?.FirstOrDefault();
                 if (firstRule != null)
                 {
-                    _ruleDescription = firstRule.Description;
                     _baseRate = firstRule.BaseRate;
                     _overtimeRate = firstRule.OvertimeRate;
                 }
@@ -44,18 +42,6 @@ namespace SnookerGameManagementSystem.ViewModels
             set
             {
                 if (SetProperty(ref _gameTypeName, value))
-                {
-                    OnPropertyChanged(nameof(CanSave));
-                }
-            }
-        }
-
-        public string RuleDescription
-        {
-            get => _ruleDescription;
-            set
-            {
-                if (SetProperty(ref _ruleDescription, value))
                 {
                     OnPropertyChanged(nameof(CanSave));
                 }
@@ -88,7 +74,6 @@ namespace SnookerGameManagementSystem.ViewModels
 
         public bool CanSave =>
             !string.IsNullOrWhiteSpace(_gameTypeName) &&
-            !string.IsNullOrWhiteSpace(_ruleDescription) &&
             _baseRate > 0 &&
             _overtimeRate >= 0;
 
@@ -104,7 +89,6 @@ namespace SnookerGameManagementSystem.ViewModels
                     // Create default rule
                     await _gameRuleService.CreateGameRuleAsync(
                         gameType.Id,
-                        _ruleDescription,
                         _baseRate,
                         _overtimeRate);
                 }
@@ -118,7 +102,6 @@ namespace SnookerGameManagementSystem.ViewModels
                     var firstRule = _existingGameType.GameRules?.FirstOrDefault();
                     if (firstRule != null)
                     {
-                        firstRule.Description = _ruleDescription;
                         firstRule.BaseRate = _baseRate;
                         firstRule.OvertimeRate = _overtimeRate;
                         await _gameRuleService.UpdateGameRuleAsync(firstRule);
@@ -127,7 +110,6 @@ namespace SnookerGameManagementSystem.ViewModels
                     {
                         await _gameRuleService.CreateGameRuleAsync(
                             _existingGameType.Id,
-                            _ruleDescription,
                             _baseRate,
                             _overtimeRate);
                     }

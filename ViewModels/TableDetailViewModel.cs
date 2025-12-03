@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
+using Microsoft.EntityFrameworkCore;
 using SnookerGameManagementSystem.Models;
 using SnookerGameManagementSystem.Services;
 
@@ -16,27 +17,42 @@ namespace SnookerGameManagementSystem.ViewModels
 
     public class TableDetailViewModel : ViewModelBase
     {
-        private readonly Session _session;
+        private readonly Guid _sessionId;
+        private Session _session;
         private readonly SessionService _sessionService;
         private readonly CustomerService _customerService;
         private readonly FrameService _frameService;
         private readonly GameRuleService _gameRuleService;
         private ObservableCollection<PlayerInfo> _players = new();
         private bool _isClosed = false;
+        private System.Windows.Threading.DispatcherTimer? _elapsedTimer;
+        private int _frameCount;
 
         public event EventHandler? SessionEnded;
         public event EventHandler? SessionDeleted;
 
         public TableDetailViewModel(Session session, SessionService sessionService, CustomerService customerService)
         {
+            _sessionId = session.Id;
             _session = session;
             _sessionService = sessionService;
             _customerService = customerService;
             _frameService = new FrameService(App.GetDbContext());
             _gameRuleService = new GameRuleService(App.GetDbContext());
+            _frameCount = session.Frames.Count;
             
             // Load players
             LoadPlayers();
+            
+            // Setup timer to update elapsed time every second
+            _elapsedTimer = new System.Windows.Threading.DispatcherTimer();
+            _elapsedTimer.Interval = TimeSpan.FromSeconds(1);
+            _elapsedTimer.Tick += (s, e) =>
+            {
+                OnPropertyChanged(nameof(ElapsedTime));
+                OnPropertyChanged(nameof(ElapsedTimeDisplay));
+            };
+            _elapsedTimer.Start();
             
             // Commands
             AddPlayerCommand = new RelayCommand(async _ => await AddPlayer());
@@ -49,7 +65,11 @@ namespace SnookerGameManagementSystem.ViewModels
 
         public string TableName => _session.Name;
         public string GameTypeName => _session.GameType?.Name ?? "Not Set";
-        public int FrameCount => _session.Frames.Count;
+        public int FrameCount
+        {
+            get => _frameCount;
+            private set => SetProperty(ref _frameCount, value);
+        }
         public string StartedAt => _session.StartedAt.ToString("g");
         
         public TimeSpan ElapsedTime => DateTime.Now - _session.StartedAt;
@@ -75,6 +95,8 @@ namespace SnookerGameManagementSystem.ViewModels
             OnPropertyChanged(nameof(HasPlayers));
             OnPropertyChanged(nameof(CanEndGame));
             OnPropertyChanged(nameof(CanNextFrame));
+            
+            System.Diagnostics.Debug.WriteLine($"[TableDetailViewModel] UpdatePlayerRelatedProperties - Players: {Players.Count}, Frames: {FrameCount}, CanEndGame: {CanEndGame}");
             
             // Force command re-evaluation
             ((RelayCommand)AddPlayerCommand).RaiseCanExecuteChanged();
@@ -133,6 +155,20 @@ namespace SnookerGameManagementSystem.ViewModels
             }
             
             return streak;
+        }
+
+        private async Task RefreshSessionData()
+        {
+            // Reload session with fresh data from database
+            var refreshedSession = await _sessionService.GetSessionByIdAsync(_sessionId);
+            if (refreshedSession != null)
+            {
+                _session = refreshedSession;
+                FrameCount = _session.Frames.Count;
+                OnPropertyChanged(nameof(TableName));
+                OnPropertyChanged(nameof(GameTypeName));
+                OnPropertyChanged(nameof(StartedAt));
+            }
         }
 
         private async Task AddPlayer()
@@ -202,6 +238,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (result == MessageBoxResult.Yes)
                 {
                     Players.Remove(player);
+                    UpdatePlayerRelatedProperties();
                 }
             }
         }
@@ -210,6 +247,46 @@ namespace SnookerGameManagementSystem.ViewModels
         {
             try
             {
+                // Refresh session data to get latest frame information
+                await RefreshSessionData();
+
+                // Check if there's an unfinished frame - need to finish it first
+                var currentFrame = _session.Frames.LastOrDefault();
+                if (currentFrame != null && currentFrame.EndedAt == null)
+                {
+                    // Show winner selection dialog for the final frame
+                    var winnerViewModel = new SelectWinnerViewModel(Players);
+                    var winnerDialog = new Views.SelectWinnerDialog(winnerViewModel)
+                    {
+                        Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                    };
+
+                    if (winnerDialog.ShowDialog() != true || winnerViewModel.SelectedWinner == null)
+                    {
+                        // User cancelled - don't end the game
+                        return;
+                    }
+
+                    var winner = winnerViewModel.SelectedWinner;
+                    var loserId = Players.FirstOrDefault(p => p.CustomerId != winner.CustomerId)?.CustomerId;
+
+                    // End the frame using a fresh context
+                    using (var context = App.GetDbContext())
+                    {
+                        var frameToUpdate = await context.Frames.FindAsync(currentFrame.Id);
+                        if (frameToUpdate != null)
+                        {
+                            frameToUpdate.WinnerCustomerId = winner.CustomerId;
+                            frameToUpdate.LoserCustomerId = loserId;
+                            frameToUpdate.EndedAt = DateTime.Now;
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }
+
+                // Refresh after ending frame
+                await RefreshSessionData();
+
                 // Get base rate from game type rule
                 decimal baseRate = 0;
                 if (_session.GameTypeId != null)
@@ -227,25 +304,37 @@ namespace SnookerGameManagementSystem.ViewModels
 
                 if (billingDialog.ShowDialog() == true)
                 {
-                    // Get the last frame to update with billing info
+                    // Update the last frame with billing info using a fresh context
                     var lastFrame = _session.Frames.LastOrDefault();
                     if (lastFrame != null)
                     {
-                        lastFrame.OvertimeMinutes = billingViewModel.OvertimeMinutes;
-                        lastFrame.OvertimeAmountPk = billingViewModel.OvertimeAmount;
-                        lastFrame.LumpSumFinePk = billingViewModel.LumpSumFine;
-                        lastFrame.DiscountPk = billingViewModel.Discount;
-                        lastFrame.TotalAmountPk = billingViewModel.TotalAmount;
-                        lastFrame.PayerMode = billingViewModel.PayerMode;
-                        lastFrame.PayStatus = billingViewModel.PayStatus;
-                        lastFrame.EndedAt = DateTime.Now;
+                        using (var context = App.GetDbContext())
+                        {
+                            var frameToUpdate = await context.Frames.FindAsync(lastFrame.Id);
+                            if (frameToUpdate != null)
+                            {
+                                frameToUpdate.OvertimeMinutes = billingViewModel.OvertimeMinutes;
+                                frameToUpdate.OvertimeAmountPk = billingViewModel.OvertimeAmount;
+                                frameToUpdate.LumpSumFinePk = billingViewModel.LumpSumFine;
+                                frameToUpdate.DiscountPk = billingViewModel.Discount;
+                                frameToUpdate.TotalAmountPk = billingViewModel.TotalAmount;
+                                frameToUpdate.PayerMode = billingViewModel.PayerMode;
+                                frameToUpdate.PayStatus = billingViewModel.PayStatus;
+                                if (frameToUpdate.EndedAt == null)
+                                {
+                                    frameToUpdate.EndedAt = DateTime.Now;
+                                }
 
-                        // Create ledger charges based on payer mode
-                        await CreateLedgerCharges(lastFrame, billingViewModel);
+                                // Create ledger charges based on payer mode
+                                await CreateLedgerCharges(context, frameToUpdate, billingViewModel);
+                                
+                                await context.SaveChangesAsync();
+                            }
+                        }
                     }
 
                     // End the session
-                    await _sessionService.EndSessionAsync(_session.Id);
+                    await _sessionService.EndSessionAsync(_sessionId);
 
                     _isClosed = true;
                     SessionEnded?.Invoke(this, EventArgs.Empty);
@@ -271,17 +360,15 @@ namespace SnookerGameManagementSystem.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Error ending game: {ex.Message}",
+                    $"Error ending game: {ex.Message}\n\nStack Trace: {ex.StackTrace}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
         }
 
-        private async Task CreateLedgerCharges(Frame frame, EndGameBillingViewModel billing)
+        private async Task CreateLedgerCharges(Data.SnookerDbContext context, Frame frame, EndGameBillingViewModel billing)
         {
-            var context = App.GetDbContext();
-            
             switch (billing.PayerMode)
             {
                 case PayerMode.LOSER:
@@ -330,8 +417,6 @@ namespace SnookerGameManagementSystem.ViewModels
                     }
                     break;
             }
-
-            await context.SaveChangesAsync();
         }
 
         private async Task NextFrame()
@@ -367,7 +452,10 @@ namespace SnookerGameManagementSystem.ViewModels
                         baseRate = rule?.BaseRate ?? 0;
                     }
 
-                    // End the current frame if it exists
+                    // Refresh session to get latest frame data
+                    await RefreshSessionData();
+
+                    // End the current frame if it exists and is not ended
                     var currentFrame = _session.Frames.LastOrDefault();
                     if (currentFrame != null && currentFrame.EndedAt == null)
                     {
@@ -383,12 +471,12 @@ namespace SnookerGameManagementSystem.ViewModels
                     // Create new frame
                     var playerIds = Players.Select(p => p.CustomerId).ToList();
                     var newFrame = await _frameService.CreateFrameAsync(
-                        _session.Id,
+                        _sessionId,
                         playerIds,
                         baseRate);
 
-                    // Reload session to get updated frame count
-                    _session.Frames.Add(newFrame);
+                    // Refresh session data to get accurate frame count
+                    await RefreshSessionData();
 
                     // Update win streaks
                     foreach (var player in Players)
@@ -396,11 +484,11 @@ namespace SnookerGameManagementSystem.ViewModels
                         player.WinStreak = CalculateWinStreak(player.CustomerId);
                     }
 
-                    OnPropertyChanged(nameof(FrameCount));
                     OnPropertyChanged(nameof(CanEndGame));
+                    ((RelayCommand)EndGameCommand).RaiseCanExecuteChanged();
 
                     MessageBox.Show(
-                        $"Frame {FrameCount} started!\n\nWinner: {winner.Name}",
+                        $"Frame {FrameCount} started!\n\nPrevious winner: {winner.Name}",
                         "Next Frame",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -409,7 +497,7 @@ namespace SnookerGameManagementSystem.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Error starting next frame: {ex.Message}",
+                    $"Error starting next frame: {ex.Message}\n\nStack Trace: {ex.StackTrace}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -432,7 +520,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (result == MessageBoxResult.Yes)
                 {
                     // End the session
-                    await _sessionService.EndSessionAsync(_session.Id);
+                    await _sessionService.EndSessionAsync(_sessionId);
 
                     _isClosed = true;
                     SessionEnded?.Invoke(this, EventArgs.Empty);
@@ -466,7 +554,7 @@ namespace SnookerGameManagementSystem.ViewModels
                     $"Table: {TableName}\n" +
                     $"Frames: {FrameCount}\n" +
                     $"Players: {Players.Count}\n\n" +
-                    $"?? WARNING: This will permanently end the session.\n" +
+                    $"? WARNING: This will permanently end the session.\n" +
                     $"All data will be marked as ended in the database.",
                     "Confirm Delete Table",
                     MessageBoxButton.YesNo,
@@ -475,7 +563,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (result == MessageBoxResult.Yes)
                 {
                     // End the session (we don't actually delete, just end it)
-                    await _sessionService.EndSessionAsync(_session.Id);
+                    await _sessionService.EndSessionAsync(_sessionId);
 
                     _isClosed = true;
                     SessionDeleted?.Invoke(this, EventArgs.Empty);
