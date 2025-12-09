@@ -114,9 +114,7 @@ SOURCE Database/SnookerDB_Schema.sql;
 ## 📚 Additional Documentation
 
 For detailed information about the new features:
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Technical overview of licensing and database features
 - **[LICENSE_AND_DATABASE_SETUP.md](LICENSE_AND_DATABASE_SETUP.md)** - Detailed setup guide for deployment
-- **[QUICKSTART_GUIDE.md](QUICKSTART_GUIDE.md)** - Quick reference for administrators and end users
 
 ### For Client Distribution
 Run `generate_license_config.bat` to interactively generate the configuration file for client deployment.

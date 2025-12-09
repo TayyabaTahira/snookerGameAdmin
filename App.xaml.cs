@@ -21,7 +21,8 @@ namespace SnookerGameManagementSystem
         private IConfiguration? _configuration;
         private DatabaseSyncService? _databaseSyncService;
 
-        // Helper method to get DbContext
+        // Helper method to get DbContext - Creates a NEW instance each time
+        // IMPORTANT: The caller is responsible for disposing the context!
         public static SnookerDbContext GetDbContext()
         {
             if (ServiceProvider == null)
@@ -29,8 +30,8 @@ namespace SnookerGameManagementSystem
                 throw new InvalidOperationException("ServiceProvider is not initialized");
             }
 
-            var scope = ServiceProvider.CreateScope();
-            return scope.ServiceProvider.GetRequiredService<SnookerDbContext>();
+            // Don't create a scope - just get the transient service directly
+            return ServiceProvider.GetRequiredService<SnookerDbContext>();
         }
 
         protected override void OnStartup(StartupEventArgs e)

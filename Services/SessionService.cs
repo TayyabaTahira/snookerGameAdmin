@@ -54,6 +54,10 @@ namespace SnookerGameManagementSystem.Services
                 .Include(s => s.Frames)
                     .ThenInclude(f => f.Participants)
                     .ThenInclude(p => p.Customer)
+                .Include(s => s.Frames)
+                    .ThenInclude(f => f.WinnerCustomer)
+                .Include(s => s.Frames)
+                    .ThenInclude(f => f.LoserCustomer)
                 .FirstOrDefaultAsync(s => s.Id == sessionId);
         }
 

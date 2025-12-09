@@ -12,6 +12,7 @@ namespace SnookerGameManagementSystem.Models
     public enum PayerMode
     {
         LOSER,
+        WINNER,
         SPLIT
     }
 
@@ -29,6 +30,7 @@ namespace SnookerGameManagementSystem.Models
                 var payerDesc = DefaultPayerMode switch
                 {
                     PayerMode.LOSER => "Loser pays",
+                    PayerMode.WINNER => "Winner pays",
                     PayerMode.SPLIT => "Split between both players",
                     _ => "Payment mode not set"
                 };

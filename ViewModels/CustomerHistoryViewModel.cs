@@ -11,6 +11,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public string TableName { get; set; } = string.Empty;
         public string GameType { get; set; } = string.Empty;
         public string Result { get; set; } = string.Empty;
+        public int WinStreak { get; set; }
         public decimal AmountDue { get; set; }
         public decimal AmountPaid { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
@@ -117,15 +118,36 @@ namespace SnookerGameManagementSystem.ViewModels
                     
                     System.Diagnostics.Debug.WriteLine($"[CustomerHistory] Frame {frame.Id}: Paid amount = {paidAmount}");
                     
+                    // Calculate win streak at this point in time
+                    // Get all frames in this session up to and including current frame
+                    var sessionFrames = await context.Frames
+                        .Where(f => f.SessionId == frame.SessionId && f.StartedAt <= frame.StartedAt)
+                        .OrderByDescending(f => f.StartedAt)
+                        .ToListAsync();
+                    
+                    int winStreak = 0;
+                    foreach (var f in sessionFrames)
+                    {
+                        if (f.WinnerCustomerId == _customer.Id)
+                        {
+                            winStreak++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    
                     historyItems.Add(new GameHistoryItem
                     {
                         Timestamp = frame.EndedAt ?? frame.StartedAt,
                         TableName = session?.Name ?? "Unknown",
                         GameType = gameType?.Name ?? "Unknown",
                         Result = frame.WinnerCustomerId == _customer.Id ? "Win" : "Lose",
+                        WinStreak = winStreak,
                         AmountDue = chargeAmount,
                         AmountPaid = paidAmount,
-                        PaymentStatus = chargeAmount == 0 ? "N/A" : 
+                        PaymentStatus = chargeAmount == 0 ? "No Charge" : 
                                        paidAmount >= chargeAmount ? "Paid" : 
                                        paidAmount > 0 ? "Partial" : "Unpaid"
                     });

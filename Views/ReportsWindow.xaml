@@ -84,6 +84,73 @@
             <Setter Property="Width" Value="0"/>
             <Setter Property="Opacity" Value="0"/>
         </Style>
+        
+        <!-- Custom DatePicker Style with hover effect -->
+        <Style x:Key="DatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="#3a3a4e"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="15,0,15,0"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Width" Value="180"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePicker">
+                        <Border x:Name="BorderElement"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <DatePickerTextBox x:Name="PART_TextBox"
+                                                  Grid.Column="0"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  FontWeight="{TemplateBinding FontWeight}"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Padding="15,0,5,0"
+                                                  VerticalContentAlignment="Center"/>
+                                <Button x:Name="PART_Button"
+                                       Grid.Column="1"
+                                       Width="35"
+                                       Height="35"
+                                       Margin="0,0,5,0"
+                                       Background="Transparent"
+                                       BorderThickness="0"
+                                       VerticalAlignment="Center">
+                                    <Path Data="M19,4H5A2,2 0 0,0 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8Z"
+                                          Fill="#555"
+                                          Stretch="Uniform"
+                                          Width="20"
+                                          Height="20"/>
+                                </Button>
+                                <Popup x:Name="PART_Popup"
+                                      AllowsTransparency="True"
+                                      Placement="Bottom"
+                                      PlacementTarget="{Binding ElementName=PART_TextBox}"
+                                      StaysOpen="False"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BorderElement" Property="BorderBrush" Value="#2196F3"/>
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="BorderElement" Property="BorderBrush" Value="#2196F3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -107,10 +174,12 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="📊 Reports &amp; Analytics" 
-                              FontSize="28" 
+                    <TextBlock FontSize="28" 
                               FontWeight="Bold" 
-                              Foreground="White"/>
+                              Foreground="White">
+                        <Run Text="📊" FontFamily="Segoe UI Emoji"/>
+                        <Run Text=" Reports &amp; Analytics"/>
+                    </TextBlock>
                     <TextBlock Text="Revenue, games, and player statistics" 
                               FontSize="14" 
                               Foreground="#a0a0b0"
@@ -118,25 +187,25 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
-                    <DatePicker SelectedDate="{Binding SelectedDate}"
-                               Background="White"
-                               Foreground="Black"
-                               BorderBrush="#3a3a4e"
-                               BorderThickness="2"
-                               Padding="15"
-                               Height="50"
-                               Width="220"
-                               FontSize="14"
-                               FontWeight="SemiBold"
-                               VerticalContentAlignment="Center">
-                        <DatePicker.Resources>
-                            <Style TargetType="DatePickerTextBox">
-                                <Setter Property="Foreground" Value="Black"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="Background" Value="White"/>
-                            </Style>
-                        </DatePicker.Resources>
-                    </DatePicker>
+                    <TextBlock Text="From:" 
+                              Foreground="White"
+                              FontSize="14"
+                              FontWeight="SemiBold"
+                              VerticalAlignment="Center"
+                              Margin="0,0,10,0"/>
+                    <DatePicker SelectedDate="{Binding FromDate}"
+                               Style="{StaticResource DatePickerStyle}"
+                               SelectedDateFormat="Short"/>
+                    
+                    <TextBlock Text="To:" 
+                              Foreground="White"
+                              FontSize="14"
+                              FontWeight="SemiBold"
+                              VerticalAlignment="Center"
+                              Margin="20,0,10,0"/>
+                    <DatePicker SelectedDate="{Binding ToDate}"
+                               Style="{StaticResource DatePickerStyle}"
+                               SelectedDateFormat="Short"/>
                 </StackPanel>
             </Grid>
 
@@ -149,27 +218,36 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Today's Revenue -->
+                <!-- Today's Revenue / To Date Revenue -->
                 <Border Grid.Column="0" Style="{StaticResource StatCard}">
                     <StackPanel>
-                        <TextBlock Text="💰 Today's Revenue" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource LabelText}" 
+                                  FontWeight="SemiBold">
+                            <Run Text="💰" FontFamily="Segoe UI Emoji"/>
+                            <Run Text=" "/>
+                            <Run Text="{Binding TodayRevenueLabel, Mode=OneWay}"/>
+                        </TextBlock>
                         <TextBlock Text="{Binding TodayRevenue, StringFormat='PKR {0:N2}'}" 
                                   Style="{StaticResource ValueText}"
                                   Margin="0,8,0,0"/>
-                        <TextBlock Text="{Binding TodayGames, StringFormat='{}{0} games'}" 
+                        <TextBlock Text="{Binding TodayGamesLabel}" 
                                   Style="{StaticResource LabelText}"
                                   Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Month's Revenue -->
+                <!-- This Month / Selected Range Revenue -->
                 <Border Grid.Column="1" Style="{StaticResource StatCard}">
                     <StackPanel>
-                        <TextBlock Text="📅 This Month" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding MonthRevenue, StringFormat='PKR {0:N2}'}" 
+                        <TextBlock Style="{StaticResource LabelText}" FontWeight="SemiBold">
+                            <Run Text="📅" FontFamily="Segoe UI Emoji"/>
+                            <Run Text=" "/>
+                            <Run Text="{Binding RangeRevenueLabel, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock Text="{Binding RangeRevenue, StringFormat='PKR {0:N2}'}" 
                                   Style="{StaticResource ValueText}"
                                   Margin="0,8,0,0"/>
-                        <TextBlock Text="{Binding MonthGames, StringFormat='{}{0} games'}" 
+                        <TextBlock Text="{Binding RangeGamesLabel}" 
                                   Style="{StaticResource LabelText}"
                                   Margin="0,8,0,0"/>
                     </StackPanel>
@@ -178,7 +256,10 @@
                 <!-- Outstanding Credit -->
                 <Border Grid.Column="2" Style="{StaticResource StatCard}">
                     <StackPanel>
-                        <TextBlock Text="⚠️ Outstanding Credit" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource LabelText}" FontWeight="SemiBold">
+                            <Run Text="⚠️" FontFamily="Segoe UI Emoji"/>
+                            <Run Text=" Outstanding Credit"/>
+                        </TextBlock>
                         <TextBlock Text="{Binding OutstandingCredit, StringFormat='PKR {0:N2}'}" 
                                   Style="{StaticResource ValueText}"
                                   Foreground="#e94560"
@@ -192,11 +273,14 @@
                 <!-- Average per Game -->
                 <Border Grid.Column="3" Style="{StaticResource StatCard}">
                     <StackPanel>
-                        <TextBlock Text="📈 Avg per Game" Style="{StaticResource LabelText}" FontWeight="SemiBold"/>
+                        <TextBlock Style="{StaticResource LabelText}" FontWeight="SemiBold">
+                            <Run Text="📈" FontFamily="Segoe UI Emoji"/>
+                            <Run Text=" Avg per Game"/>
+                        </TextBlock>
                         <TextBlock Text="{Binding AveragePerGame, StringFormat='PKR {0:N0}'}" 
                                   Style="{StaticResource ValueText}"
                                   Margin="0,8,0,0"/>
-                        <TextBlock Text="Today's average" 
+                        <TextBlock Text="{Binding AverageLabel}" 
                                   Style="{StaticResource LabelText}"
                                   Margin="0,8,0,0"/>
                     </StackPanel>
@@ -213,7 +297,10 @@
                 <!-- Top Players -->
                 <Border Grid.Column="0" Style="{StaticResource StatCard}" Margin="0,0,12,0">
                     <StackPanel>
-                        <TextBlock Text="🏆 Top Players" Style="{StaticResource HeaderText}"/>
+                        <TextBlock Style="{StaticResource HeaderText}">
+                            <Run Text="🏆" FontFamily="Segoe UI Emoji"/>
+                            <Run Text=" Top Players (Date Range)"/>
+                        </TextBlock>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450">
                             <DataGrid ItemsSource="{Binding TopPlayers}"
                                      Margin="0" Padding="10">
@@ -231,7 +318,10 @@
                 <!-- Recent Games -->
                 <Border Grid.Column="1" Style="{StaticResource StatCard}" Margin="12,0,0,0">
                     <StackPanel>
-                        <TextBlock Text="🎮 Recent Games" Style="{StaticResource HeaderText}"/>
+                        <TextBlock Style="{StaticResource HeaderText}">
+                            <Run Text="🎮" FontFamily="Segoe UI Emoji"/>
+                            <Run Text=" Recent Games (Date Range)"/>
+                        </TextBlock>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="450">
                             <DataGrid ItemsSource="{Binding RecentGames}"
                                      Margin="0" Padding="10">
@@ -252,10 +342,12 @@
                    Background="#AA000000" 
                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="⏳ Loading Reports..." 
-                              FontSize="20" 
+                    <TextBlock FontSize="20" 
                               Foreground="White"
-                              HorizontalAlignment="Center"/>
+                              HorizontalAlignment="Center">
+                        <Run Text="⏳" FontFamily="Segoe UI Emoji"/>
+                        <Run Text=" Loading Reports..."/>
+                    </TextBlock>
                     <ProgressBar IsIndeterminate="True" 
                                 Width="200" 
                                 Height="4"

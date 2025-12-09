@@ -13,12 +13,13 @@ namespace SnookerGameManagementSystem.ViewModels
         private readonly SessionService _sessionService;
         private readonly CustomerService _customerService;
         
-        private DateTime _selectedDate = DateTime.Today;
+        private DateTime _fromDate = DateTime.Today.AddMonths(-1);
+        private DateTime _toDate = DateTime.Today;
         private decimal _todayRevenue;
-        private decimal _monthRevenue;
+        private decimal _rangeRevenue;
         private decimal _outstandingCredit;
         private int _todayGames;
-        private int _monthGames;
+        private int _rangeGames;
         private ObservableCollection<TopPlayerViewModel> _topPlayers = new();
         private ObservableCollection<RecentGameViewModel> _recentGames = new();
         private bool _isLoading;
@@ -37,13 +38,35 @@ namespace SnookerGameManagementSystem.ViewModels
             _ = LoadReportsAsync();
         }
 
-        public DateTime SelectedDate
+        public DateTime FromDate
         {
-            get => _selectedDate;
+            get => _fromDate;
             set
             {
-                if (SetProperty(ref _selectedDate, value))
+                if (SetProperty(ref _fromDate, value))
                 {
+                    OnPropertyChanged(nameof(TodayRevenueLabel));
+                    OnPropertyChanged(nameof(RangeRevenueLabel));
+                    OnPropertyChanged(nameof(TodayGamesLabel));
+                    OnPropertyChanged(nameof(RangeGamesLabel));
+                    OnPropertyChanged(nameof(AverageLabel));
+                    _ = LoadReportsAsync();
+                }
+            }
+        }
+
+        public DateTime ToDate
+        {
+            get => _toDate;
+            set
+            {
+                if (SetProperty(ref _toDate, value))
+                {
+                    OnPropertyChanged(nameof(TodayRevenueLabel));
+                    OnPropertyChanged(nameof(RangeRevenueLabel));
+                    OnPropertyChanged(nameof(TodayGamesLabel));
+                    OnPropertyChanged(nameof(RangeGamesLabel));
+                    OnPropertyChanged(nameof(AverageLabel));
                     _ = LoadReportsAsync();
                 }
             }
@@ -52,19 +75,19 @@ namespace SnookerGameManagementSystem.ViewModels
         public decimal TodayRevenue
         {
             get => _todayRevenue;
+            set => SetProperty(ref _todayRevenue, value);
+        }
+
+        public decimal RangeRevenue
+        {
+            get => _rangeRevenue;
             set
             {
-                if (SetProperty(ref _todayRevenue, value))
+                if (SetProperty(ref _rangeRevenue, value))
                 {
                     OnPropertyChanged(nameof(AveragePerGame));
                 }
             }
-        }
-
-        public decimal MonthRevenue
-        {
-            get => _monthRevenue;
-            set => SetProperty(ref _monthRevenue, value);
         }
 
         public decimal OutstandingCredit
@@ -80,15 +103,22 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 if (SetProperty(ref _todayGames, value))
                 {
-                    OnPropertyChanged(nameof(AveragePerGame));
+                    OnPropertyChanged(nameof(TodayGamesLabel));
                 }
             }
         }
 
-        public int MonthGames
+        public int RangeGames
         {
-            get => _monthGames;
-            set => SetProperty(ref _monthGames, value);
+            get => _rangeGames;
+            set
+            {
+                if (SetProperty(ref _rangeGames, value))
+                {
+                    OnPropertyChanged(nameof(AveragePerGame));
+                    OnPropertyChanged(nameof(RangeGamesLabel));
+                }
+            }
         }
 
         public ObservableCollection<TopPlayerViewModel> TopPlayers
@@ -109,7 +139,46 @@ namespace SnookerGameManagementSystem.ViewModels
             set => SetProperty(ref _isLoading, value);
         }
 
-        public decimal AveragePerGame => TodayGames > 0 ? TodayRevenue / TodayGames : 0;
+        public decimal AveragePerGame => RangeGames > 0 ? RangeRevenue / RangeGames : 0;
+
+        // Dynamic Labels
+        public string TodayRevenueLabel
+        {
+            get
+            {
+                if (ToDate.Date == DateTime.Today)
+                    return "Today's Revenue";
+                else
+                    return $"{ToDate:M/dd/yyyy} Revenue";
+            }
+        }
+
+        public string RangeRevenueLabel
+        {
+            get
+            {
+                var monthAgo = DateTime.Today.AddMonths(-1);
+                if (FromDate.Date == monthAgo.Date && ToDate.Date == DateTime.Today)
+                    return "This Month Revenue";
+                else
+                    return "Selected Range Revenue";
+            }
+        }
+
+        public string TodayGamesLabel => $"{TodayGames} games";
+
+        public string RangeGamesLabel => $"{RangeGames} games";
+
+        public string AverageLabel
+        {
+            get
+            {
+                if (ToDate.Date == DateTime.Today && FromDate.Date == DateTime.Today.AddMonths(-1))
+                    return "This month average";
+                else
+                    return "Range average";
+            }
+        }
 
         public ICommand RefreshCommand { get; }
 
@@ -118,36 +187,36 @@ namespace SnookerGameManagementSystem.ViewModels
             IsLoading = true;
             try
             {
-                // Today's revenue
-                var todayStart = _selectedDate.Date;
+                // Today's revenue (based on To Date)
+                var todayStart = ToDate.Date;
                 var todayEnd = todayStart.AddDays(1);
                 TodayRevenue = await _ledgerService.GetTotalRevenueAsync(todayStart, todayEnd);
                 
-                // Month's revenue
-                var monthStart = new DateTime(_selectedDate.Year, _selectedDate.Month, 1);
-                var monthEnd = monthStart.AddMonths(1);
-                MonthRevenue = await _ledgerService.GetTotalRevenueAsync(monthStart, monthEnd);
+                // Range revenue (from From Date to To Date)
+                var rangeStart = FromDate.Date;
+                var rangeEnd = ToDate.Date.AddDays(1);
+                RangeRevenue = await _ledgerService.GetTotalRevenueAsync(rangeStart, rangeEnd);
                 
-                // Outstanding credit
+                // Outstanding credit (always total)
                 OutstandingCredit = await _ledgerService.GetTotalOutstandingCreditAsync();
                 
-                // Today's games count
+                // Today's games count (based on To Date)
                 var todayFrames = await _sessionService.GetFramesByDateRangeAsync(todayStart, todayEnd);
                 TodayGames = todayFrames.Count();
                 
-                // Month's games count
-                var monthFrames = await _sessionService.GetFramesByDateRangeAsync(monthStart, monthEnd);
-                MonthGames = monthFrames.Count();
+                // Range games count
+                var rangeFrames = await _sessionService.GetFramesByDateRangeAsync(rangeStart, rangeEnd);
+                RangeGames = rangeFrames.Count();
                 
-                // Top players (by games played this month)
+                // Top players - based on date range
                 var customers = await _customerService.GetAllCustomersAsync();
                 var topPlayersList = customers
                     .Select(c => new
                     {
                         Customer = c,
-                        GamesPlayed = monthFrames.Count(f =>
+                        GamesPlayed = rangeFrames.Count(f =>
                             f.Participants.Any(p => p.CustomerId == c.Id)),
-                        GamesWon = monthFrames.Count(f => f.WinnerCustomerId == c.Id)
+                        GamesWon = rangeFrames.Count(f => f.WinnerCustomerId == c.Id)
                     })
                     .Where(x => x.GamesPlayed > 0)
                     .OrderByDescending(x => x.GamesPlayed)
@@ -163,8 +232,8 @@ namespace SnookerGameManagementSystem.ViewModels
                 
                 TopPlayers = new ObservableCollection<TopPlayerViewModel>(topPlayersList);
                 
-                // Recent games (last 20)
-                var recentFrames = monthFrames
+                // Recent games - based on date range (last 20 in range)
+                var recentFrames = rangeFrames
                     .OrderByDescending(f => f.EndedAt ?? f.StartedAt)
                     .Take(20)
                     .Select(f => new RecentGameViewModel

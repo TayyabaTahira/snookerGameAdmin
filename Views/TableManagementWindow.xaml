@@ -1,24 +1,23 @@
 <Window x:Class="SnookerGameManagementSystem.Views.TableManagementWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="?? Table Management"
+        Title="Table Management"
         Height="700"
         Width="1000"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e"
-        ResizeMode="CanResize">
+        ResizeMode="CanResize"
+        Icon="/Images/snooker_logo.png">
 
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontFamily" Value="Segoe UI, Segoe UI Emoji"/>
         </Style>
 
         <Style x:Key="HeaderText" TargetType="TextBlock">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="28"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontFamily" Value="Segoe UI, Segoe UI Emoji"/>
         </Style>
 
         <Style x:Key="AddButton" TargetType="Button">
@@ -119,8 +118,9 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="?? Table Management"
-                          Style="{StaticResource HeaderText}"/>
+                <TextBlock Style="{StaticResource HeaderText}">
+                    <Run Text="Table Management"/>
+                </TextBlock>
                 <TextBlock Text="Manage physical tables for your snooker club - Drag to reorder"
                           FontSize="14"
                           Foreground="#a0a0b0"
@@ -243,10 +243,12 @@
                Background="#AA000000"
                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="? Loading Tables..."
-                          FontSize="20"
+                <TextBlock FontSize="20"
                           Foreground="White"
-                          HorizontalAlignment="Center"/>
+                          HorizontalAlignment="Center">
+                    <Run Text="⏳" FontFamily="Segoe UI Emoji"/>
+                    <Run Text=" Loading Tables..."/>
+                </TextBlock>
                 <ProgressBar IsIndeterminate="True"
                             Width="200"
                             Height="4"

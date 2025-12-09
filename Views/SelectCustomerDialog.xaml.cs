@@ -38,6 +38,7 @@ namespace SnookerGameManagementSystem.Views
 
         private void ComboBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            // Prevent ComboBox from handling mouse wheel - let it bubble to parent ScrollViewer
             e.Handled = true;
             var eventArg = new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
             {
@@ -46,6 +47,12 @@ namespace SnookerGameManagementSystem.Views
             };
             var parent = ((System.Windows.Controls.Control)sender).Parent as UIElement;
             parent?.RaiseEvent(eventArg);
+        }
+
+        private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Let the ScrollViewer inside the dropdown handle scrolling without closing
+            // Don't mark as handled - allow normal scrolling behavior
         }
 
         protected override void OnClosed(EventArgs e)

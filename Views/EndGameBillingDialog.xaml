@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SnookerGameManagementSystem.Converters"
         mc:Ignorable="d"
-        Title="End Game - Billing" 
-        Height="650" 
-        Width="600"
+        Title="End Game - Session Billing" 
+        Height="750" 
+        Width="700"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e"
         ResizeMode="NoResize">
@@ -32,7 +32,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
-        <!-- ComboBox Style with left-aligned white text and placeholder support -->
+        <!-- ComboBox Style -->
         <Style TargetType="ComboBox">
             <Setter Property="Background" Value="#16213e"/>
             <Setter Property="Foreground" Value="White"/>
@@ -136,7 +136,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- ComboBoxItem Style with white text on highlight/selected -->
+        <!-- ComboBoxItem Style -->
         <Style TargetType="ComboBoxItem">
             <Setter Property="Background" Value="#16213e"/>
             <Setter Property="Foreground" Value="White"/>
@@ -235,28 +235,28 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="End Game - Billing" 
+            <TextBlock Text="End Game - Session Billing" 
                       FontSize="24" 
                       FontWeight="Bold" 
                       Foreground="White"
                       Margin="0,0,0,5"/>
-            <TextBlock Text="Calculate charges and finalize the game session" 
+            <TextBlock Text="Review all frames and finalize session charges" 
                       FontSize="12" 
                       Foreground="#a0a0b0"/>
         </StackPanel>
 
         <!-- Form -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" PanningMode="VerticalOnly">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" PanningMode="VerticalOnly">
             <StackPanel>
-                <!-- Game Summary -->
+                <!-- Session Summary -->
                 <Border Background="#16213e"
                        BorderBrush="#3a3a4e"
                        BorderThickness="2"
                        CornerRadius="6"
                        Padding="20"
-                       Margin="0,0,0,20">
+                       Margin="0,0,0,15">
                     <StackPanel>
-                        <TextBlock Text="Game Summary" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBlock Text="Session Summary" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -268,20 +268,80 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Frames Played:" Margin="0,0,10,5"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding FrameCount}" FontWeight="Bold"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Frames:" Margin="0,0,10,5"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalFrames}" FontWeight="Bold"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Duration:" Margin="0,0,10,5"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DurationDisplay}" FontWeight="Bold"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Total Duration:" Margin="0,0,10,5"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SessionDuration}" FontWeight="Bold"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Base Rate:" Margin="0,0,10,0"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BaseRateDisplay}" FontWeight="Bold" Foreground="#4caf50"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Base Charges:" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BaseRateTotalDisplay}" FontWeight="Bold" Foreground="#4caf50"/>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- Charges -->
-                <TextBlock Text="Charges" FontWeight="Bold" Margin="0,10,0,5"/>
+                <!-- Frame Details -->
+                <TextBlock Text="Frames Played" FontWeight="Bold" FontSize="16" Margin="0,10,0,10"/>
+                <Border Background="#16213e"
+                       BorderBrush="#3a3a4e"
+                       BorderThickness="2"
+                       CornerRadius="6"
+                       Padding="15"
+                       Margin="0,0,0,15"
+                       MaxHeight="200">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding FrameSummaries}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#0f3460"
+                                           BorderBrush="#2a2a3e"
+                                           BorderThickness="1"
+                                           CornerRadius="4"
+                                           Padding="12"
+                                           Margin="0,0,0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                      Text="{Binding FrameNumber, StringFormat='Frame {0}'}" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#e94560"
+                                                      Margin="0,0,15,5"/>
+                                            
+                                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                                                <TextBlock Foreground="#a0a0b0" FontSize="12">
+                                                    <Run Text="Duration: "/>
+                                                    <Run Text="{Binding Duration}" Foreground="White"/>
+                                                    <Run Text=" | Winner: "/>
+                                                    <Run Text="{Binding Winner}" Foreground="#4caf50"/>
+                                                    <Run Text=" | Loser: "/>
+                                                    <Run Text="{Binding Loser}" Foreground="#ff6b6b"/>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"
+                                                      Text="{Binding BaseRateDisplay}" 
+                                                      FontWeight="Bold" 
+                                                      Foreground="#4caf50"
+                                                      VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Additional Session Charges -->
+                <TextBlock Text="Additional Session Charges" FontWeight="Bold" FontSize="16" Margin="0,10,0,10"/>
                 
                 <!-- Overtime -->
                 <TextBlock Text="Overtime Minutes" Margin="0,0,0,5"/>
@@ -311,7 +371,7 @@
                        Padding="20"
                        Margin="0,15,0,20">
                     <Grid>
-                        <TextBlock Text="Total Amount:" FontSize="16" FontWeight="Bold"/>
+                        <TextBlock Text="Total Session Amount:" FontSize="16" FontWeight="Bold"/>
                         <TextBlock Text="{Binding TotalAmountDisplay}" 
                                   FontSize="20" 
                                   FontWeight="Bold" 
@@ -369,9 +429,9 @@
                    Click="Cancel_Click"/>
 
             <Button Grid.Column="2"
-                   Content="End Game"
+                   Content="Confirm and End Session"
                    Style="{StaticResource PrimaryButton}"
-                   Width="130"
+                   Width="180"
                    Click="EndGame_Click"/>
         </Grid>
     </Grid>

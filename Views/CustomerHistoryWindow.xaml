@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Customer History" 
-        Height="600" 
-        Width="900"
+        Height="700" 
+        Width="1000"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e">
 
@@ -143,6 +143,24 @@
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Result}" Value="Lose">
                                     <Setter Property="Foreground" Value="#e94560"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Win Streak" Binding="{Binding WinStreak}" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding WinStreak}" Value="0">
+                                    <Setter Property="Foreground" Value="#666666"/>
+                                    <Setter Property="Text" Value="-"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Result}" Value="Win">
+                                    <Setter Property="Foreground" Value="#4caf50"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
