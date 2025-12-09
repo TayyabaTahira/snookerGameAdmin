@@ -5,6 +5,8 @@ A modern WPF Desktop Application for managing snooker clubs built with **.NET 10
 ## ✨ Features
 
 - 🔐 Secure Authentication
+- 🔒 **MAC Address-Based Licensing** - Restrict usage to licensed machines
+- 🌐 **Hybrid Database Connectivity** - Automatic remote/local database switching
 - 📊 Dynamic Dashboard - Manage multiple tables
 - ⚡ Session Management - Track games
 - 👥 Customer Management - Track players & balances
@@ -44,10 +46,16 @@ Edit `appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
-    "SnookerDb": "Server=localhost;Database=snooker_club_db;User=root;Password=YOUR_PASSWORD;AllowUserVariables=true;UseAffectedRows=false"
+    "SnookerDb": "Server=localhost;Database=snooker_club_db;User=root;Password=YOUR_PASSWORD;AllowUserVariables=true;UseAffectedRows=false",
+    "RemoteDb": "Server=your-remote-server;Database=snooker_club_db;User=user;Password=pass;AllowUserVariables=true;UseAffectedRows=false"
+  },
+  "License": {
+    "MacAddress": ""
   }
 }
 ```
+
+**Note**: Leave `MacAddress` empty for development. For production, set it to the client's MAC address.
 
 ### 3. Build and Run
 
@@ -97,6 +105,21 @@ Password: admin123
 CREATE DATABASE snooker_club_db;
 SOURCE Database/SnookerDB_Schema.sql;
 ```
+
+### License Validation Failed
+- Application is locked to a specific MAC address
+- Contact administrator with your MAC address: `ipconfig /all`
+- Look for "Physical Address" of your network adapter
+
+## 📚 Additional Documentation
+
+For detailed information about the new features:
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Technical overview of licensing and database features
+- **[LICENSE_AND_DATABASE_SETUP.md](LICENSE_AND_DATABASE_SETUP.md)** - Detailed setup guide for deployment
+- **[QUICKSTART_GUIDE.md](QUICKSTART_GUIDE.md)** - Quick reference for administrators and end users
+
+### For Client Distribution
+Run `generate_license_config.bat` to interactively generate the configuration file for client deployment.
 
 ## 📄 License
 

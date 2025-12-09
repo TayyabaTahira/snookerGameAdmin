@@ -10,15 +10,17 @@ namespace SnookerGameManagementSystem.ViewModels
     public class DashboardViewModel : ViewModelBase
     {
         private readonly SessionService _sessionService;
+        private readonly TableService _tableService;
         private readonly GameRuleService _gameRuleService;
         private readonly GameTypeService _gameTypeService;
         private readonly CustomerService _customerService;
-        private ObservableCollection<SessionTileViewModel> _sessions = new();
+        private ObservableCollection<TableTileViewModel> _tables = new();
         private bool _isLoading;
         private System.Windows.Threading.DispatcherTimer? _timerUpdateTimer;
 
         public DashboardViewModel(
-            SessionService sessionService, 
+            SessionService sessionService,
+            TableService tableService,
             GameRuleService gameRuleService, 
             GameTypeService gameTypeService,
             CustomerService customerService)
@@ -26,13 +28,15 @@ namespace SnookerGameManagementSystem.ViewModels
             System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Constructor started");
             
             _sessionService = sessionService;
+            _tableService = tableService;
             _gameRuleService = gameRuleService;
             _gameTypeService = gameTypeService;
             _customerService = customerService;
             
-            AddTableCommand = new RelayCommand(async _ => await AddTableAsync());
-            RefreshCommand = new RelayCommand(async _ => await LoadSessionsAsync());
-            OpenTableCommand = new RelayCommand(param => OpenTable(param as SessionTileViewModel));
+            StartSessionCommand = new RelayCommand(async param => await StartSessionAsync(param as TableTileViewModel));
+            ViewSessionCommand = new RelayCommand(param => ViewSession(param as TableTileViewModel));
+            RefreshCommand = new RelayCommand(async _ => await LoadTablesAsync());
+            TablesManagementCommand = new RelayCommand(_ => OpenTablesManagement());
             GameTypesCommand = new RelayCommand(_ => OpenGameTypes());
             CustomersCommand = new RelayCommand(_ => OpenCustomers());
             ReportsCommand = new RelayCommand(_ => OpenReports());
@@ -45,14 +49,14 @@ namespace SnookerGameManagementSystem.ViewModels
             
             System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Commands initialized");
             
-            // Load sessions asynchronously on the UI thread to ensure proper initialization
+            // Load tables asynchronously on the UI thread to ensure proper initialization
             Application.Current.Dispatcher.BeginInvoke(async () =>
             {
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Starting initial LoadSessionsAsync");
-                    await LoadSessionsAsync();
-                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Initial LoadSessionsAsync completed");
+                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Starting initial LoadTablesAsync");
+                    await LoadTablesAsync();
+                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Initial LoadTablesAsync completed");
                 }
                 catch (Exception ex)
                 {
@@ -73,16 +77,19 @@ namespace SnookerGameManagementSystem.ViewModels
 
         private void UpdateSessionTimers()
         {
-            foreach (var session in Sessions)
+            foreach (var table in Tables)
             {
-                session.RefreshElapsedTime();
+                if (table.HasActiveSession)
+                {
+                    table.RefreshElapsedTime();
+                }
             }
         }
 
-        public ObservableCollection<SessionTileViewModel> Sessions
+        public ObservableCollection<TableTileViewModel> Tables
         {
-            get => _sessions;
-            set => SetProperty(ref _sessions, value);
+            get => _tables;
+            set => SetProperty(ref _tables, value);
         }
 
         public bool IsLoading
@@ -97,49 +104,50 @@ namespace SnookerGameManagementSystem.ViewModels
             }
         }
 
-        public ICommand AddTableCommand { get; }
+        public ICommand StartSessionCommand { get; }
+        public ICommand ViewSessionCommand { get; }
         public ICommand RefreshCommand { get; }
-        public ICommand OpenTableCommand { get; }
+        public ICommand TablesManagementCommand { get; }
         public ICommand GameTypesCommand { get; }
         public ICommand CustomersCommand { get; }
         public ICommand ReportsCommand { get; }
 
-        private async Task LoadSessionsAsync()
+        private async Task LoadTablesAsync()
         {
-            System.Diagnostics.Debug.WriteLine("[DashboardViewModel] LoadSessionsAsync started");
+            System.Diagnostics.Debug.WriteLine("[DashboardViewModel] LoadTablesAsync started");
             IsLoading = true;
             
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Fetching active sessions...");
-                var sessions = await _sessionService.GetActiveSessionsAsync();
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Retrieved {sessions?.Count() ?? 0} sessions");
+                System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Fetching active tables...");
+                var tables = await _tableService.GetActiveTablesAsync();
+                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Retrieved {tables?.Count() ?? 0} tables");
                 
                 // Update UI on the UI thread
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                await Application.Current.Dispatcher.InvokeAsync(async () =>
                 {
-                    Sessions.Clear();
-                    foreach (var session in sessions)
+                    Tables.Clear();
+                    foreach (var table in tables)
                     {
-                        var tileViewModel = new SessionTileViewModel(session)
-                        {
-                            OpenCommand = OpenTableCommand
-                        };
-                        Sessions.Add(tileViewModel);
+                        var hasActiveSession = await _tableService.HasActiveSessionAsync(table.Id);
+                        var activeSession = hasActiveSession ? await _tableService.GetActiveSessionForTableAsync(table.Id) : null;
+                        
+                        var tileViewModel = new TableTileViewModel(table, hasActiveSession, activeSession);
+                        Tables.Add(tileViewModel);
                     }
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Added {Sessions.Count} session tiles to UI");
+                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Added {Tables.Count} table tiles to UI");
                 });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error loading sessions: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error loading tables: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Stack: {ex.StackTrace}");
                 
                 // Show error to user
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     MessageBox.Show(
-                        $"Error loading sessions: {ex.Message}",
+                        $"Error loading tables: {ex.Message}",
                         "Error",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
@@ -148,20 +156,17 @@ namespace SnookerGameManagementSystem.ViewModels
             finally
             {
                 IsLoading = false;
-                System.Diagnostics.Debug.WriteLine("[DashboardViewModel] LoadSessionsAsync completed, IsLoading = false");
+                System.Diagnostics.Debug.WriteLine("[DashboardViewModel] LoadTablesAsync completed, IsLoading = false");
             }
         }
 
-        private async Task AddTableAsync()
+        private async Task StartSessionAsync(TableTileViewModel? tableTile)
         {
+            if (tableTile == null) return;
+
             try
             {
-                System.Diagnostics.Debug.WriteLine("[DashboardViewModel] ========== AddTableAsync started ==========");
-                
-                // Get next table number
-                System.Diagnostics.Debug.WriteLine("[DashboardViewModel] Getting next table number...");
-                int tableNumber = await _sessionService.GetNextTableNumberAsync();
-                string defaultTableName = $"Table #{tableNumber}";
+                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Starting session on table: {tableTile.Name}");
                 
                 // Load game types for dialog
                 var gameTypes = await _gameTypeService.GetAllGameTypesAsync();
@@ -169,7 +174,8 @@ namespace SnookerGameManagementSystem.ViewModels
                 // Create and show dialog
                 var dialogViewModel = new CreateSessionViewModel(_customerService)
                 {
-                    TableName = defaultTableName,
+                    TableName = tableTile.Name, // Pre-filled from table
+                    IsTableNameReadOnly = true, // Make it read-only
                     GameTypes = new ObservableCollection<GameType>(gameTypes)
                 };
                 
@@ -184,75 +190,78 @@ namespace SnookerGameManagementSystem.ViewModels
                 
                 if (result == true && dialogViewModel.SelectedGameType != null)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Creating session: {dialogViewModel.TableName}");
+                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Creating session on table: {tableTile.Name}");
                     
-                    // Create session with selected game type
-                    var session = await _sessionService.CreateSessionAsync(
-                        dialogViewModel.TableName, 
-                        dialogViewModel.SelectedGameType.Id);
-                    
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Session created with ID: {session.Id}");
-                    
-                    // If players were selected, create first frame
-                    if (dialogViewModel.SelectedCustomers.Count >= 2)
+                    // Create session with selected game type and table ID
+                    using (var context = App.GetDbContext())
                     {
-                        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Creating first frame with {dialogViewModel.SelectedCustomers.Count} players");
+                        var session = new Session
+                        {
+                            TableId = tableTile.Id,
+                            Name = tableTile.Name,
+                            GameTypeId = dialogViewModel.SelectedGameType.Id,
+                            StartedAt = DateTime.Now,
+                            Status = SessionStatus.IN_PROGRESS
+                        };
                         
-                        // Get base rate from game rule
-                        var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(dialogViewModel.SelectedGameType.Id);
-                        decimal baseRate = rule?.BaseRate ?? 0;
+                        context.Sessions.Add(session);
+                        await context.SaveChangesAsync();
                         
-                        var frameService = new FrameService(App.GetDbContext());
-                        var playerIds = dialogViewModel.SelectedCustomers.Select(c => c.Id).ToList();
-                        await frameService.CreateFrameAsync(session.Id, playerIds, baseRate);
+                        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Session created with ID: {session.Id}");
                         
-                        System.Diagnostics.Debug.WriteLine("[DashboardViewModel] First frame created");
+                        // If players were selected, create first frame
+                        if (dialogViewModel.SelectedCustomers.Count >= 2)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Creating first frame with {dialogViewModel.SelectedCustomers.Count} players");
+                            
+                            // Get base rate from game rule
+                            var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(dialogViewModel.SelectedGameType.Id);
+                            decimal baseRate = rule?.BaseRate ?? 0;
+                            
+                            var frameService = new FrameService(context);
+                            var playerIds = dialogViewModel.SelectedCustomers.Select(c => c.Id).ToList();
+                            await frameService.CreateFrameAsync(session.Id, playerIds, baseRate);
+                            
+                            System.Diagnostics.Debug.WriteLine("[DashboardViewModel] First frame created");
+                        }
                     }
                     
-                    // Add to UI on the UI thread
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        var tileViewModel = new SessionTileViewModel(session)
-                        {
-                            OpenCommand = OpenTableCommand
-                        };
-                        Sessions.Add(tileViewModel);
-                        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Added new session tile for table: {session.Name}");
-                    });
+                    // Reload tables to show updated status
+                    await LoadTablesAsync();
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] AddTableAsync cancelled or no game type selected");
+                    System.Diagnostics.Debug.WriteLine("[DashboardViewModel] StartSessionAsync cancelled or no game type selected");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error in AddTableAsync: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Error in StartSessionAsync: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Stack: {ex.StackTrace}");
                 
                 // Show error to user
                 MessageBox.Show(
-                    $"Error adding table: {ex.Message}",
-                    "Table Error",
+                    $"Error starting session: {ex.Message}",
+                    "Session Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
         }
 
-        private void OpenTable(SessionTileViewModel? tileViewModel)
+        private void ViewSession(TableTileViewModel? tableTile)
         {
-            if (tileViewModel == null) return;
+            if (tableTile == null || !tableTile.HasActiveSession || tableTile.ActiveSession == null) return;
 
             try
             {
                 var detailViewModel = new TableDetailViewModel(
-                    tileViewModel.Session,
+                    tableTile.ActiveSession,
                     _sessionService,
                     _customerService);
 
                 // Subscribe to events
-                detailViewModel.SessionEnded += async (s, e) => await LoadSessionsAsync();
-                detailViewModel.SessionDeleted += async (s, e) => await LoadSessionsAsync();
+                detailViewModel.SessionEnded += async (s, e) => await LoadTablesAsync();
+                detailViewModel.SessionDeleted += async (s, e) => await LoadTablesAsync();
 
                 var detailWindow = new TableDetailWindow(detailViewModel)
                 {
@@ -264,6 +273,29 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 MessageBox.Show(
                     $"Error opening table details:\n\n{ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenTablesManagement()
+        {
+            try
+            {
+                var window = new Views.TableManagementWindow(_tableService)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                window.ShowDialog();
+                
+                // Reload tables after closing management window
+                _ = LoadTablesAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening tables management:\n\n{ex.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -335,21 +367,54 @@ namespace SnookerGameManagementSystem.ViewModels
         }
     }
 
-    public class SessionTileViewModel : ViewModelBase
+    public class TableTileViewModel : ViewModelBase
     {
-        public Session Session { get; }
+        private readonly Table _table;
+        private bool _hasActiveSession;
+        private Session? _activeSession;
 
-        public SessionTileViewModel(Session session)
+        public TableTileViewModel(Table table, bool hasActiveSession, Session? activeSession)
         {
-            Session = session;
+            _table = table;
+            _hasActiveSession = hasActiveSession;
+            _activeSession = activeSession;
         }
 
-        public string Id => Session.Id.ToString();
-        public string Name => Session.Name;
-        public string GameTypeName => Session.GameType?.Name ?? "Not Set";
-        public int FrameCount => Session.Frames.Count;
+        public Guid Id => _table.Id;
+        public string Name => _table.Name;
+        public int DisplayOrder => _table.DisplayOrder;
+        public bool IsActive => _table.IsActive;
         
-        public TimeSpan ElapsedTime => DateTime.Now - Session.StartedAt;
+        public bool HasActiveSession
+        {
+            get => _hasActiveSession;
+            set => SetProperty(ref _hasActiveSession, value);
+        }
+
+        public Session? ActiveSession
+        {
+            get => _activeSession;
+            set
+            {
+                if (SetProperty(ref _activeSession, value))
+                {
+                    OnPropertyChanged(nameof(GameTypeName));
+                    OnPropertyChanged(nameof(FrameCount));
+                    OnPropertyChanged(nameof(PlayersDisplay));
+                }
+            }
+        }
+
+        public string GameTypeName => ActiveSession?.GameType?.Name ?? "N/A";
+        public int FrameCount => ActiveSession?.Frames.Count ?? 0;
+        
+        public string StatusBadge => HasActiveSession ? "In Use" : "Available";
+        public string StatusColor => HasActiveSession ? "#e94560" : "#4caf50";
+        public bool ShowSessionInfo => HasActiveSession && ActiveSession != null;
+        
+        public TimeSpan ElapsedTime => HasActiveSession && ActiveSession != null 
+            ? DateTime.Now - ActiveSession.StartedAt 
+            : TimeSpan.Zero;
         
         public string ElapsedTimeDisplay => 
             $"{(int)ElapsedTime.TotalHours:D2}:{ElapsedTime.Minutes:D2}:{ElapsedTime.Seconds:D2}";
@@ -358,7 +423,9 @@ namespace SnookerGameManagementSystem.ViewModels
         {
             get
             {
-                var lastFrame = Session.Frames.LastOrDefault();
+                if (ActiveSession == null) return "No players";
+                
+                var lastFrame = ActiveSession.Frames.LastOrDefault();
                 if (lastFrame == null) return "No players";
                 
                 var players = lastFrame.Participants.Select(p => p.Customer?.FullName ?? "Unknown");
@@ -366,7 +433,7 @@ namespace SnookerGameManagementSystem.ViewModels
             }
         }
 
-        public ICommand? OpenCommand { get; set; }
+        public Table GetTable() => _table;
 
         public void RefreshElapsedTime()
         {

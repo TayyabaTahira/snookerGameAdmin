@@ -10,6 +10,7 @@ namespace SnookerGameManagementSystem.ViewModels
     {
         private readonly CustomerService _customerService;
         private string _tableName = string.Empty;
+        private bool _isTableNameReadOnly = false;
         private GameType? _selectedGameType;
         private ObservableCollection<GameType> _gameTypes = new();
         private ObservableCollection<Customer> _selectedCustomers = new();
@@ -32,6 +33,12 @@ namespace SnookerGameManagementSystem.ViewModels
                     OnPropertyChanged(nameof(CanCreate));
                 }
             }
+        }
+
+        public bool IsTableNameReadOnly
+        {
+            get => _isTableNameReadOnly;
+            set => SetProperty(ref _isTableNameReadOnly, value);
         }
 
         public GameType? SelectedGameType

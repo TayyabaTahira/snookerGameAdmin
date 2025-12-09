@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;
 using SnookerGameManagementSystem.ViewModels;
 
 namespace SnookerGameManagementSystem.Views
@@ -43,12 +44,26 @@ namespace SnookerGameManagementSystem.Views
             }
         }
 
-        private void SessionTile_Click(object sender, MouseButtonEventArgs e)
+        private void TableTile_Click(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.DataContext is SessionTileViewModel tileViewModel)
+            if (sender is Border border && border.Tag is TableTileViewModel tableTile)
             {
-                _viewModel.OpenTableCommand.Execute(tileViewModel);
+                // If table has active session, view it; otherwise start new session
+                if (tableTile.HasActiveSession)
+                {
+                    _viewModel.ViewSessionCommand.Execute(tableTile);
+                }
+                else
+                {
+                    _viewModel.StartSessionCommand.Execute(tableTile);
+                }
             }
+        }
+
+        private void Button_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Stop the event from bubbling up to the Border's MouseLeftButtonUp
+            e.Handled = true;
         }
     }
 }

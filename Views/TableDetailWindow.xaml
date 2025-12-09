@@ -99,12 +99,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header with Delete Button -->
+        <!-- Header -->
         <Border Grid.Row="0" Background="#0f3460" Padding="20">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -130,16 +129,6 @@
                               Foreground="#a0a0b0"
                               HorizontalAlignment="Right"/>
                 </StackPanel>
-
-                <Button Grid.Column="2"
-                       Content="Delete Table"
-                       Background="#d83551"
-                       Foreground="White"
-                       BorderThickness="0"
-                       Padding="15,8"
-                       Cursor="Hand"
-                       Command="{Binding DeleteTableCommand}"
-                       VerticalAlignment="Center"/>
             </Grid>
         </Border>
 

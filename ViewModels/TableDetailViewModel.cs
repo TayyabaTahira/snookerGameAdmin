@@ -60,7 +60,6 @@ namespace SnookerGameManagementSystem.ViewModels
             EndGameCommand = new RelayCommand(async _ => await EndGame(), _ => CanEndGame);
             NextFrameCommand = new RelayCommand(async _ => await NextFrame(), _ => CanNextFrame);
             QuitSessionCommand = new RelayCommand(async _ => await QuitSession());
-            DeleteTableCommand = new RelayCommand(async _ => await DeleteTable());
         }
 
         public string TableName => _session.Name;
@@ -114,7 +113,6 @@ namespace SnookerGameManagementSystem.ViewModels
         public ICommand EndGameCommand { get; }
         public ICommand NextFrameCommand { get; }
         public ICommand QuitSessionCommand { get; }
-        public ICommand DeleteTableCommand { get; }
 
         private void LoadPlayers()
         {
@@ -205,6 +203,55 @@ namespace SnookerGameManagementSystem.ViewModels
                         WinStreak = 0
                     });
                     
+                    // If this is the first frame and we now have players, create a frame to persist them
+                    if (FrameCount == 0 && Players.Count >= 1)
+                    {
+                        // Get base rate from game type rule
+                        decimal baseRate = 0;
+                        if (_session.GameTypeId != null)
+                        {
+                            var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(_session.GameTypeId.Value);
+                            baseRate = rule?.BaseRate ?? 0;
+                        }
+
+                        // Create the first frame with current players
+                        var playerIds = Players.Select(p => p.CustomerId).ToList();
+                        await _frameService.CreateFrameAsync(_sessionId, playerIds, baseRate);
+                        
+                        // Refresh session data to update frame count
+                        await RefreshSessionData();
+                    }
+                    // If frame already exists, update participants for existing frame
+                    else if (FrameCount > 0)
+                    {
+                        var currentFrame = _session.Frames.LastOrDefault();
+                        if (currentFrame != null)
+                        {
+                            using (var context = App.GetDbContext())
+                            {
+                                // Check if participant already exists
+                                var existingParticipant = await context.FrameParticipants
+                                    .FirstOrDefaultAsync(fp => fp.FrameId == currentFrame.Id && fp.CustomerId == customer.Id);
+                                
+                                if (existingParticipant == null)
+                                {
+                                    // Add new participant to current frame
+                                    var participant = new FrameParticipant
+                                    {
+                                        Id = Guid.NewGuid(),
+                                        FrameId = currentFrame.Id,
+                                        CustomerId = customer.Id,
+                                        Team = null,
+                                        IsWinner = false,
+                                        SharePk = null
+                                    };
+                                    context.FrameParticipants.Add(participant);
+                                    await context.SaveChangesAsync();
+                                }
+                            }
+                        }
+                    }
+                    
                     // Update UI properties
                     UpdatePlayerRelatedProperties();
                     
@@ -225,7 +272,7 @@ namespace SnookerGameManagementSystem.ViewModels
             }
         }
 
-        private void RemovePlayer(PlayerInfo? player)
+        private async void RemovePlayer(PlayerInfo? player)
         {
             if (player != null)
             {
@@ -237,7 +284,40 @@ namespace SnookerGameManagementSystem.ViewModels
 
                 if (result == MessageBoxResult.Yes)
                 {
+                    // Remove from UI
                     Players.Remove(player);
+                    
+                    // Remove from database if frame exists
+                    if (FrameCount > 0)
+                    {
+                        var currentFrame = _session.Frames.LastOrDefault();
+                        if (currentFrame != null)
+                        {
+                            try
+                            {
+                                using (var context = App.GetDbContext())
+                                {
+                                    var participant = await context.FrameParticipants
+                                        .FirstOrDefaultAsync(fp => fp.FrameId == currentFrame.Id && fp.CustomerId == player.CustomerId);
+                                    
+                                    if (participant != null)
+                                    {
+                                        context.FrameParticipants.Remove(participant);
+                                        await context.SaveChangesAsync();
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show(
+                                    $"Error removing player from database: {ex.Message}",
+                                    "Error",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                            }
+                        }
+                    }
+                    
                     UpdatePlayerRelatedProperties();
                 }
             }
@@ -282,80 +362,85 @@ namespace SnookerGameManagementSystem.ViewModels
                             await context.SaveChangesAsync();
                         }
                     }
-                }
 
-                // Refresh after ending frame
-                await RefreshSessionData();
-
-                // Get base rate from game type rule
-                decimal baseRate = 0;
-                if (_session.GameTypeId != null)
-                {
-                    var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(_session.GameTypeId.Value);
-                    baseRate = rule?.BaseRate ?? 0;
-                }
-
-                // Show billing dialog
-                var billingViewModel = new EndGameBillingViewModel(_session, baseRate);
-                var billingDialog = new Views.EndGameBillingDialog(billingViewModel)
-                {
-                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
-                };
-
-                if (billingDialog.ShowDialog() == true)
-                {
-                    // Update the last frame with billing info using a fresh context
-                    var lastFrame = _session.Frames.LastOrDefault();
-                    if (lastFrame != null)
+                    // Refresh after ending frame
+                    await RefreshSessionData();
+                    currentFrame = _session.Frames.LastOrDefault();
+                    
+                    // Get base rate from game type rule
+                    decimal baseRate = 0;
+                    if (_session.GameTypeId != null)
                     {
-                        using (var context = App.GetDbContext())
-                        {
-                            var frameToUpdate = await context.Frames.FindAsync(lastFrame.Id);
-                            if (frameToUpdate != null)
-                            {
-                                frameToUpdate.OvertimeMinutes = billingViewModel.OvertimeMinutes;
-                                frameToUpdate.OvertimeAmountPk = billingViewModel.OvertimeAmount;
-                                frameToUpdate.LumpSumFinePk = billingViewModel.LumpSumFine;
-                                frameToUpdate.DiscountPk = billingViewModel.Discount;
-                                frameToUpdate.TotalAmountPk = billingViewModel.TotalAmount;
-                                frameToUpdate.PayerMode = billingViewModel.PayerMode;
-                                frameToUpdate.PayStatus = billingViewModel.PayStatus;
-                                if (frameToUpdate.EndedAt == null)
-                                {
-                                    frameToUpdate.EndedAt = DateTime.Now;
-                                }
-
-                                // Create ledger charges based on payer mode
-                                await CreateLedgerCharges(context, frameToUpdate, billingViewModel);
-                                
-                                await context.SaveChangesAsync();
-                            }
-                        }
+                        var rule = await _gameRuleService.GetRuleByGameTypeIdAsync(_session.GameTypeId.Value);
+                        baseRate = rule?.BaseRate ?? 0;
                     }
 
-                    // End the session
-                    await _sessionService.EndSessionAsync(_sessionId);
-
-                    _isClosed = true;
-                    SessionEnded?.Invoke(this, EventArgs.Empty);
-
-                    MessageBox.Show(
-                        $"Game ended successfully!\n\n" +
-                        $"Total Amount: PKR {billingViewModel.TotalAmount:N2}\n" +
-                        $"Payment Status: {billingViewModel.PayStatus}",
-                        "Game Ended",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-
-                    // Close the window
-                    Application.Current.Dispatcher.Invoke(() =>
+                    // Show billing dialog for the final frame if it doesn't have billing yet
+                    if (currentFrame != null && currentFrame.TotalAmountPk == 0)
                     {
-                        var window = Application.Current.Windows
-                            .OfType<Window>()
-                            .FirstOrDefault(w => w.DataContext == this);
-                        window?.Close();
-                    });
+                        var billingViewModel = new EndGameBillingViewModel(_session, baseRate);
+                        var billingDialog = new Views.EndGameBillingDialog(billingViewModel)
+                        {
+                            Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive),
+                            Title = "Final Frame Billing"
+                        };
+
+                        if (billingDialog.ShowDialog() == true)
+                        {
+                            // Update the last frame with billing info using a fresh context
+                            using (var context = App.GetDbContext())
+                            {
+                                var frameToUpdate = await context.Frames.FindAsync(currentFrame.Id);
+                                if (frameToUpdate != null)
+                                {
+                                    frameToUpdate.OvertimeMinutes = billingViewModel.OvertimeMinutes;
+                                    frameToUpdate.OvertimeAmountPk = billingViewModel.OvertimeAmount;
+                                    frameToUpdate.LumpSumFinePk = billingViewModel.LumpSumFine;
+                                    frameToUpdate.DiscountPk = billingViewModel.Discount;
+                                    frameToUpdate.TotalAmountPk = billingViewModel.TotalAmount;
+                                    frameToUpdate.PayerMode = billingViewModel.PayerMode;
+                                    frameToUpdate.PayStatus = billingViewModel.PayStatus;
+
+                                    // Create ledger charges based on payer mode
+                                    await CreateLedgerCharges(context, frameToUpdate, billingViewModel);
+                                    
+                                    await context.SaveChangesAsync();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // User cancelled billing - don't end the game
+                            return;
+                        }
+                    }
                 }
+
+                // End the session
+                await _sessionService.EndSessionAsync(_sessionId);
+
+                _isClosed = true;
+                SessionEnded?.Invoke(this, EventArgs.Empty);
+
+                // Calculate total amount for all frames
+                decimal totalSessionAmount = _session.Frames.Sum(f => f.TotalAmountPk);
+                
+                MessageBox.Show(
+                    $"Game ended successfully!\n\n" +
+                    $"Total Frames: {_session.Frames.Count}\n" +
+                    $"Total Amount: PKR {totalSessionAmount:N2}",
+                    "Game Ended",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // Close the window
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var window = Application.Current.Windows
+                        .OfType<Window>()
+                        .FirstOrDefault(w => w.DataContext == this);
+                    window?.Close();
+                });
             }
             catch (Exception ex)
             {
@@ -396,21 +481,6 @@ namespace SnookerGameManagementSystem.ViewModels
                             FrameId = frame.Id,
                             Amount = splitAmount,
                             Description = $"Game charge (split) - {_session.Name}",
-                            ChargedAt = DateTime.Now
-                        };
-                        context.LedgerCharges.Add(charge);
-                    }
-                    break;
-
-                case PayerMode.EACH:
-                    foreach (var player in Players)
-                    {
-                        var charge = new LedgerCharge
-                        {
-                            CustomerId = player.CustomerId,
-                            FrameId = frame.Id,
-                            Amount = billing.TotalAmount,
-                            Description = $"Game charge (each) - {_session.Name}",
                             ChargedAt = DateTime.Now
                         };
                         context.LedgerCharges.Add(charge);
@@ -462,10 +532,73 @@ namespace SnookerGameManagementSystem.ViewModels
                         // Determine loser (first player who is not winner)
                         var loserId = Players.FirstOrDefault(p => p.CustomerId != winner.CustomerId)?.CustomerId;
 
-                        await _frameService.EndFrameAsync(
-                            currentFrame.Id,
-                            winner.CustomerId,
-                            loserId);
+                        // End frame with winner/loser
+                        using (var context = App.GetDbContext())
+                        {
+                            var frameToUpdate = await context.Frames.FindAsync(currentFrame.Id);
+                            if (frameToUpdate != null)
+                            {
+                                frameToUpdate.WinnerCustomerId = winner.CustomerId;
+                                frameToUpdate.LoserCustomerId = loserId;
+                                frameToUpdate.EndedAt = DateTime.Now;
+                                await context.SaveChangesAsync();
+                            }
+                        }
+
+                        // Refresh to get updated frame
+                        await RefreshSessionData();
+                        currentFrame = _session.Frames.FirstOrDefault(f => f.Id == currentFrame.Id);
+
+                        // Show billing dialog for the completed frame
+                        if (currentFrame != null)
+                        {
+                            var billingViewModel = new EndGameBillingViewModel(_session, baseRate);
+                            var billingDialog = new Views.EndGameBillingDialog(billingViewModel)
+                            {
+                                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive),
+                                Title = $"Frame {FrameCount} Billing"
+                            };
+
+                            if (billingDialog.ShowDialog() == true)
+                            {
+                                // Update frame with billing info and create ledger charges
+                                using (var context = App.GetDbContext())
+                                {
+                                    var frameToUpdate = await context.Frames.FindAsync(currentFrame.Id);
+                                    if (frameToUpdate != null)
+                                    {
+                                        frameToUpdate.OvertimeMinutes = billingViewModel.OvertimeMinutes;
+                                        frameToUpdate.OvertimeAmountPk = billingViewModel.OvertimeAmount;
+                                        frameToUpdate.LumpSumFinePk = billingViewModel.LumpSumFine;
+                                        frameToUpdate.DiscountPk = billingViewModel.Discount;
+                                        frameToUpdate.TotalAmountPk = billingViewModel.TotalAmount;
+                                        frameToUpdate.PayerMode = billingViewModel.PayerMode;
+                                        frameToUpdate.PayStatus = billingViewModel.PayStatus;
+
+                                        // Create ledger charges based on payer mode
+                                        await CreateLedgerCharges(context, frameToUpdate, billingViewModel);
+                                        
+                                        await context.SaveChangesAsync();
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // User cancelled billing - revert frame end
+                                using (var context = App.GetDbContext())
+                                {
+                                    var frameToRevert = await context.Frames.FindAsync(currentFrame.Id);
+                                    if (frameToRevert != null)
+                                    {
+                                        frameToRevert.WinnerCustomerId = null;
+                                        frameToRevert.LoserCustomerId = null;
+                                        frameToRevert.EndedAt = null;
+                                        await context.SaveChangesAsync();
+                                    }
+                                }
+                                return; // Don't create next frame
+                            }
+                        }
                     }
 
                     // Create new frame
@@ -539,55 +672,6 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 MessageBox.Show(
                     $"Error quitting session: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
-        }
-
-        private async Task DeleteTable()
-        {
-            try
-            {
-                var result = MessageBox.Show(
-                    $"Are you sure you want to DELETE this table?\n\n" +
-                    $"Table: {TableName}\n" +
-                    $"Frames: {FrameCount}\n" +
-                    $"Players: {Players.Count}\n\n" +
-                    $"? WARNING: This will permanently end the session.\n" +
-                    $"All data will be marked as ended in the database.",
-                    "Confirm Delete Table",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    // End the session (we don't actually delete, just end it)
-                    await _sessionService.EndSessionAsync(_sessionId);
-
-                    _isClosed = true;
-                    SessionDeleted?.Invoke(this, EventArgs.Empty);
-
-                    MessageBox.Show(
-                        "Table session has been ended successfully.",
-                        "Table Deleted",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-
-                    // Close the window
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var window = Application.Current.Windows
-                            .OfType<Window>()
-                            .FirstOrDefault(w => w.DataContext == this);
-                        window?.Close();
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Error deleting table: {ex.Message}",
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);

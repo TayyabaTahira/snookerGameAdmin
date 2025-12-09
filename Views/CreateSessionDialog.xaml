@@ -1,13 +1,10 @@
 <Window x:Class="SnookerGameManagementSystem.Views.CreateSessionDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SnookerGameManagementSystem.Converters"
-        mc:Ignorable="d"
-        Title="Create New Table" 
-        Height="550" 
-        Width="550"
+        Title="Create New Session"
+        Height="650"
+        Width="650"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e"
         ResizeMode="NoResize">
@@ -268,12 +265,12 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="Create New Table" 
+            <TextBlock Text="Start Session" 
                       FontSize="24" 
                       FontWeight="Bold" 
                       Foreground="White"
                       Margin="0,0,0,5"/>
-            <TextBlock Text="Enter game information to start a new session" 
+            <TextBlock Text="Select game type and players to start a new session" 
                       FontSize="12" 
                       Foreground="#a0a0b0"
                       Margin="0,0,0,0"/>
@@ -286,6 +283,7 @@
                 <TextBlock Text="Table Name"/>
                 <TextBox x:Name="TableNameTextBox"
                         Text="{Binding TableName, UpdateSourceTrigger=PropertyChanged}"
+                        IsReadOnly="{Binding IsTableNameReadOnly}"
                         Margin="0,0,0,15"/>
 
                 <!-- Game Type -->
@@ -396,7 +394,7 @@
                    Click="Cancel_Click"/>
 
             <Button Grid.Column="2"
-                   Content="Create Table"
+                   Content="Start Session"
                    Style="{StaticResource PrimaryButton}"
                    Width="130"
                    Click="CreateTable_Click"

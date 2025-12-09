@@ -19,6 +19,7 @@ namespace SnookerGameManagementSystem
     {
         public static IServiceProvider? ServiceProvider { get; private set; }
         private IConfiguration? _configuration;
+        private DatabaseSyncService? _databaseSyncService;
 
         // Helper method to get DbContext
         public static SnookerDbContext GetDbContext()
@@ -48,14 +49,29 @@ namespace SnookerGameManagementSystem
                 _configuration = builder.Build();
                 System.Diagnostics.Debug.WriteLine("[App] Configuration loaded");
 
+                // Validate License
+                if (!ValidateLicense())
+                {
+                    Shutdown();
+                    return;
+                }
+
                 // Verify connection string exists
                 var connectionString = _configuration.GetConnectionString("SnookerDb");
+                // REMOTE DATABASE DISABLED - Use local only for now
+                // var remoteConnectionString = _configuration.GetConnectionString("RemoteDb");
+                
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
                     throw new InvalidOperationException("Connection string 'SnookerDb' not found in appsettings.json");
                 }
                 System.Diagnostics.Debug.WriteLine($"[App] Connection string: {connectionString?.Split(';')[0]}...");
 
+                // REMOTE DATABASE DISABLED - No sync service for now
+                // _databaseSyncService = new DatabaseSyncService(
+                //     remoteConnectionString ?? connectionString,
+                //     connectionString);
+                
                 // Setup dependency injection
                 var serviceCollection = new ServiceCollection();
                 ConfigureServices(serviceCollection);
@@ -118,6 +134,59 @@ namespace SnookerGameManagementSystem
             }
         }
 
+        private bool ValidateLicense()
+        {
+            try
+            {
+                var licensedMacAddress = _configuration?["License:MacAddress"];
+                
+                // If no MAC address is configured, allow access (for development)
+                if (string.IsNullOrWhiteSpace(licensedMacAddress))
+                {
+                    System.Diagnostics.Debug.WriteLine("[App] No license MAC address configured - allowing access");
+                    return true;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[App] Validating license for MAC: {licensedMacAddress}");
+                
+                var licenseService = new LicenseValidationService(licensedMacAddress);
+                
+                if (!licenseService.ValidateLicense())
+                {
+                    var currentMacs = licenseService.GetMacAddresses();
+                    var macList = currentMacs.Count > 0 
+                        ? string.Join("\n", currentMacs.Select(m => $"• {m}"))
+                        : "No MAC addresses found";
+
+                    MessageBox.Show(
+                        "❌ License Validation Failed\n\n" +
+                        "This application is licensed to a different machine.\n\n" +
+                        $"Licensed MAC Address:\n{licensedMacAddress}\n\n" +
+                        $"Your MAC Addresses:\n{macList}\n\n" +
+                        "Please contact the administrator for a valid license.",
+                        "License Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    
+                    return false;
+                }
+
+                System.Diagnostics.Debug.WriteLine("[App] License validation successful");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[App] License validation error: {ex.Message}");
+                MessageBox.Show(
+                    $"License validation error:\n\n{ex.Message}\n\n" +
+                    "Please check your configuration.",
+                    "License Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return false;
+            }
+        }
+
         private void TestDatabaseConnection()
         {
             try
@@ -159,7 +228,9 @@ namespace SnookerGameManagementSystem
                 // Check if app_user table exists and has data
                 System.Diagnostics.Debug.WriteLine("[App] Counting users...");
                 var userCount = context.AppUsers.Count();
-                System.Diagnostics.Debug.WriteLine($"[App] Database connection successful! Found {userCount} users.");
+                // REMOTE DATABASE DISABLED
+                // var connectionMode = _databaseSyncService?.CurrentMode ?? DatabaseConnectionMode.Remote;
+                System.Diagnostics.Debug.WriteLine($"[App] Database connection successful (Local)! Found {userCount} users.");
                 
                 if (userCount == 0)
                 {
@@ -214,7 +285,14 @@ namespace SnookerGameManagementSystem
                 services.AddSingleton(_configuration);
                 System.Diagnostics.Debug.WriteLine("[App] Configuration added");
 
-                // DbContext
+                // REMOTE DATABASE DISABLED - No sync service for now
+                // if (_databaseSyncService != null)
+                // {
+                //     services.AddSingleton(_databaseSyncService);
+                //     services.AddSingleton<DbContextFactory>();
+                // }
+
+                // DbContext - Use local connection only
                 var connectionString = _configuration.GetConnectionString("SnookerDb");
                 System.Diagnostics.Debug.WriteLine($"[App] Connection string retrieved: {!string.IsNullOrEmpty(connectionString)}");
                 
@@ -223,6 +301,20 @@ namespace SnookerGameManagementSystem
                     throw new InvalidOperationException(
                         "Database connection string 'SnookerDb' not found in appsettings.json");
                 }
+                
+                // REMOTE DATABASE DISABLED - Use local connection directly
+                // var activeConnectionString = connectionString;
+                // if (_databaseSyncService != null)
+                // {
+                //     try
+                //     {
+                //         activeConnectionString = _databaseSyncService.GetActiveConnectionStringAsync().GetAwaiter().GetResult();
+                //     }
+                //     catch
+                //     {
+                //         System.Diagnostics.Debug.WriteLine("[App] Using local connection as fallback");
+                //     }
+                // }
                 
                 services.AddDbContext<SnookerDbContext>(options =>
                 {
@@ -239,7 +331,7 @@ namespace SnookerGameManagementSystem
                                 maxRetryDelay: TimeSpan.FromSeconds(5),
                                 errorNumbersToAdd: null);
                         });
-                    
+
                     System.Diagnostics.Debug.WriteLine("[App] DbContext configured");
                 }, ServiceLifetime.Transient);
                 System.Diagnostics.Debug.WriteLine("[App] DbContext service added");
@@ -247,6 +339,7 @@ namespace SnookerGameManagementSystem
                 // Services - Transient for WPF
                 services.AddTransient<AuthService>();
                 services.AddTransient<SessionService>();
+                services.AddTransient<TableService>();
                 services.AddTransient<CustomerService>();
                 services.AddTransient<GameRuleService>();
                 services.AddTransient<GameTypeService>();

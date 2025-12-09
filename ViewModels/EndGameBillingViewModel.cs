@@ -35,8 +35,7 @@ namespace SnookerGameManagementSystem.ViewModels
             PayerModes = new ObservableCollection<PayerModeOption>
             {
                 new() { Value = PayerMode.LOSER, Display = "Loser Pays" },
-                new() { Value = PayerMode.SPLIT, Display = "Split Between Players" },
-                new() { Value = PayerMode.EACH, Display = "Each Player Pays" }
+                new() { Value = PayerMode.SPLIT, Display = "Split Equally" }
             };
 
             PayStatuses = new ObservableCollection<PayStatusOption>
@@ -152,7 +151,6 @@ namespace SnookerGameManagementSystem.ViewModels
                 {
                     PayerMode.LOSER => "The losing player will be charged the full amount",
                     PayerMode.SPLIT => $"Amount will be split equally among {playerCount} players",
-                    PayerMode.EACH => $"Each of the {playerCount} players will be charged the full amount",
                     _ => "Payment mode not selected"
                 };
             }

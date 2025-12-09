@@ -12,9 +12,7 @@ namespace SnookerGameManagementSystem.Models
     public enum PayerMode
     {
         LOSER,
-        SPLIT,
-        EACH,
-        CUSTOM
+        SPLIT
     }
 
     public class GameRule
@@ -32,8 +30,6 @@ namespace SnookerGameManagementSystem.Models
                 {
                     PayerMode.LOSER => "Loser pays",
                     PayerMode.SPLIT => "Split between both players",
-                    PayerMode.EACH => "Each player pays their own",
-                    PayerMode.CUSTOM => "Custom payment allocation",
                     _ => "Payment mode not set"
                 };
 

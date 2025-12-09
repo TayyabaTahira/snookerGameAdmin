@@ -15,6 +15,7 @@ namespace SnookerGameManagementSystem.Data
         public DbSet<GameType> GameTypes { get; set; } = null!;
         public DbSet<GameRule> GameRules { get; set; } = null!;
         public DbSet<Customer> Customers { get; set; } = null!;
+        public DbSet<Table> Tables { get; set; } = null!;
         public DbSet<Session> Sessions { get; set; } = null!;
         public DbSet<Frame> Frames { get; set; } = null!;
         public DbSet<FrameParticipant> FrameParticipants { get; set; } = null!;
@@ -105,6 +106,21 @@ namespace SnookerGameManagementSystem.Data
                 entity.Ignore(e => e.Balance);
             });
 
+            // Table
+            modelBuilder.Entity<Table>(entity =>
+            {
+                entity.ToTable("table");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id)
+                    .HasColumnName("id");
+                entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(50).IsRequired();
+                entity.Property(e => e.DisplayOrder).HasColumnName("display_order").IsRequired();
+                entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+                entity.Property(e => e.IsActive).HasColumnName("is_active");
+                
+                entity.HasIndex(e => e.Name).IsUnique();
+            });
+
             // Session
             modelBuilder.Entity<Session>(entity =>
             {
@@ -112,6 +128,8 @@ namespace SnookerGameManagementSystem.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id)
                     .HasColumnName("id");
+                entity.Property(e => e.TableId)
+                    .HasColumnName("table_id");
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(50).IsRequired();
                 entity.Property(e => e.GameTypeId)
                     .HasColumnName("game_type_id");
@@ -122,6 +140,11 @@ namespace SnookerGameManagementSystem.Data
                     .HasConversion(sessionStatusConverter)
                     .IsRequired();
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+
+                entity.HasOne(e => e.Table)
+                    .WithMany(t => t.Sessions)
+                    .HasForeignKey(e => e.TableId)
+                    .OnDelete(DeleteBehavior.SetNull);
 
                 entity.HasOne(e => e.GameType)
                     .WithMany(g => g.Sessions)

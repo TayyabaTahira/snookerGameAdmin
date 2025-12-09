@@ -135,7 +135,7 @@
                            Cursor="Hand"
                            Command="{Binding GameTypesCommand}"/>
                     
-                    <Button Content="📊 Reports" 
+                    <Button Content="🎱 Tables" 
                            Background="#16213e"
                            Foreground="White"
                            FontFamily="Segoe UI Emoji"
@@ -143,16 +143,26 @@
                            Margin="0,0,10,0"
                            BorderThickness="0"
                            Cursor="Hand"
-                           Command="{Binding ReportsCommand}"/>
+                           Command="{Binding TablesManagementCommand}"/>
                     
-                    <Button Content="👥  Customers" 
+                    <Button Content="👥 Customers" 
+                           Background="#16213e"
+                           Foreground="White"
+                           FontFamily="Segoe UI Emoji"
+                           Padding="15,8"
+                           Margin="0,0,10,0"
+                           BorderThickness="0"
+                           Cursor="Hand"
+                           Command="{Binding CustomersCommand}"/>
+                    
+                    <Button Content="📊 Reports" 
                            Background="#16213e"
                            Foreground="White"
                            FontFamily="Segoe UI Emoji"
                            Padding="15,8"
                            BorderThickness="0"
                            Cursor="Hand"
-                           Command="{Binding CustomersCommand}"/>
+                           Command="{Binding ReportsCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -161,135 +171,191 @@
         <ScrollViewer Grid.Row="1" 
                      VerticalScrollBarVisibility="Auto"
                      Padding="20">
-            <!-- Wrap Panel containing both Add button and session tiles -->
-            <WrapPanel Orientation="Horizontal">
-                <!-- Add Table Button (First in WrapPanel) -->
-                <Button Style="{StaticResource AddTableButton}"
-                       Command="{Binding AddTableCommand}"
-                       Width="320"
-                       Height="200"
-                       Margin="12">
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="+" FontSize="72" HorizontalAlignment="Center" Foreground="White" FontWeight="Bold"/>
-                        <TextBlock Text="Add Table" FontSize="16" HorizontalAlignment="Center" Foreground="White" FontWeight="SemiBold"/>
-                    </StackPanel>
-                </Button>
+            <!-- Wrap Panel containing table tiles -->
+            <ItemsControl ItemsSource="{Binding Tables}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
 
-                <!-- Session Tiles -->
-                <ItemsControl ItemsSource="{Binding Sessions}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource SessionTile}" 
+                               Width="320" 
+                               Height="200"
+                               MouseLeftButtonUp="TableTile_Click"
+                               Tag="{Binding}">
+                            <!-- Content centered on the table background -->
+                            <Grid Margin="40,25,40,20">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource SessionTile}"
-                                   Width="320"
-                                   Height="200"
-                                   MouseLeftButtonUp="SessionTile_Click">
-                                <!-- Content centered on the table background -->
-                                <Grid Margin="48,34,48,34">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
+                                <!-- Table Name -->
+                                <TextBlock Grid.Row="0"
+                                          Text="{Binding Name}"
+                                          FontSize="16"
+                                          FontWeight="Bold"
+                                          Foreground="White"
+                                          HorizontalAlignment="Center"
+                                          TextTrimming="CharacterEllipsis"
+                                          Margin="0,0,0,5">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="2" Opacity="0.9"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
 
-                                    <!-- Table Name -->
-                                    <TextBlock Grid.Row="0"
-                                              Text="{Binding Name}"
-                                              FontSize="15"
+                                <!-- Status Badge -->
+                                <Border Grid.Row="1"
+                                       Background="{Binding StatusColor, FallbackValue=#4caf50}"
+                                       CornerRadius="3"
+                                       Padding="8,3"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,12">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="Black" BlurRadius="3" ShadowDepth="2" Opacity="0.8"/>
+                                    </Border.Effect>
+                                    <TextBlock Text="{Binding StatusBadge}"
+                                              FontSize="10"
                                               FontWeight="Bold"
                                               Foreground="White"
-                                              HorizontalAlignment="Center"
-                                              TextTrimming="CharacterEllipsis"
-                                              Margin="0,0,0,3">
-                                        <TextBlock.Effect>
-                                            <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="2" Opacity="0.9"/>
-                                        </TextBlock.Effect>
-                                    </TextBlock>
+                                              HorizontalAlignment="Center"/>
+                                </Border>
 
-                                    <!-- Game Type -->
-                                    <TextBlock Grid.Row="1"
-                                              Text="{Binding GameTypeName}"
-                                              FontSize="11"
-                                              Foreground="#FFD700"
-                                              HorizontalAlignment="Center"
-                                              FontWeight="Bold"
-                                              TextTrimming="CharacterEllipsis"
-                                              Margin="0,0,0,4">
-                                        <TextBlock.Effect>
-                                            <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="2" Opacity="0.9"/>
-                                        </TextBlock.Effect>
-                                    </TextBlock>
-
+                                <!-- Session Info (When In Use) -->
+                                <StackPanel Grid.Row="2" 
+                                           Visibility="{Binding ShowSessionInfo, Converter={StaticResource BoolToVisibilityConverter}}"
+                                           Margin="0,0,0,8">
                                     <!-- Players Display -->
-                                    <TextBlock Grid.Row="2"
-                                              Text="{Binding PlayersDisplay}"
-                                              FontSize="9"
+                                    <TextBlock Text="{Binding PlayersDisplay}"
+                                              FontSize="10"
                                               Foreground="#FFFFFF"
                                               HorizontalAlignment="Center"
                                               TextWrapping="Wrap"
                                               TextAlignment="Center"
                                               TextTrimming="CharacterEllipsis"
-                                              MaxHeight="20"
+                                              MaxWidth="220"
+                                              MaxHeight="32"
                                               FontWeight="SemiBold"
-                                              Margin="0,0,0,4">
+                                              LineHeight="14"
+                                              Margin="0,0,0,8">
                                         <TextBlock.Effect>
                                             <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="2" Opacity="0.9"/>
                                         </TextBlock.Effect>
                                     </TextBlock>
 
                                     <!-- Timer -->
-                                    <Border Grid.Row="3"
-                                           Background="#1a1a2e" 
+                                    <Border Background="#1a1a2e" 
                                            BorderBrush="#FFD700" 
                                            BorderThickness="2" 
                                            CornerRadius="4" 
-                                           Padding="8,3"
-                                           HorizontalAlignment="Center"
-                                           Margin="0,0,0,4">
+                                           Padding="10,5"
+                                           HorizontalAlignment="Center">
                                         <Border.Effect>
                                             <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="2" Opacity="0.8"/>
                                         </Border.Effect>
                                         <TextBlock Text="{Binding ElapsedTimeDisplay}"
-                                                  FontSize="15"
+                                                  FontSize="16"
                                                   FontWeight="Bold"
                                                   Foreground="#FFFFFF"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"/>
                                     </Border>
+                                </StackPanel>
 
-                                    <!-- Frame Count -->
-                                    <Border Grid.Row="4"
-                                            Background="#1a1a2e"
-                                            BorderBrush="#FFD700"
-                                            BorderThickness="1"
-                                            CornerRadius="3"
-                                            Padding="6,2"
-                                            HorizontalAlignment="Center">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="Black" BlurRadius="3" ShadowDepth="2" Opacity="0.8"/>
-                                        </Border.Effect>
-                                        <TextBlock FontSize="9"
-                                                  Foreground="#FFFFFF"
-                                                  HorizontalAlignment="Center"
-                                                  FontWeight="Bold">
-                                            <Run Text="Frames:" Foreground="#a0a0b0"/>
-                                            <Run Text=" "/>
-                                            <Run Text="{Binding FrameCount, Mode=OneWay}" FontWeight="ExtraBold" Foreground="#FFD700" FontSize="10"/>
-                                        </TextBlock>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </WrapPanel>
+                                <!-- Spacer -->
+                                <Grid Grid.Row="3"/>
+
+                                <!-- Action Button - Start -->
+                                <Button Grid.Row="4"
+                                       Background="#4caf50"
+                                       Foreground="White"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Padding="24,10"
+                                       BorderThickness="0"
+                                       Cursor="Hand"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Bottom"
+                                       MinWidth="120"
+                                       Visibility="{Binding HasActiveSession, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                                       Command="{Binding DataContext.StartSessionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       CommandParameter="{Binding}"
+                                       PreviewMouseLeftButtonDown="Button_PreviewMouseLeftButtonDown">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                   CornerRadius="6"
+                                                   Padding="{TemplateBinding Padding}">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="2" Opacity="0.8"/>
+                                                </Border.Effect>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="#4caf50"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#45a049"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <TextBlock Text="▶ Start" FontWeight="Bold" FontSize="16"/>
+                                </Button>
+
+                                <!-- Action Button - View -->
+                                <Button Grid.Row="4"
+                                       Background="#2196f3"
+                                       Foreground="White"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       Padding="12,6"
+                                       BorderThickness="0"
+                                       Cursor="Hand"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Bottom"
+                                       Visibility="{Binding HasActiveSession, Converter={StaticResource BoolToVisibilityConverter}}"
+                                       Command="{Binding DataContext.ViewSessionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       CommandParameter="{Binding}"
+                                       PreviewMouseLeftButtonDown="Button_PreviewMouseLeftButtonDown">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                   CornerRadius="4"
+                                                   Padding="{TemplateBinding Padding}">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="Black" BlurRadius="3" ShadowDepth="2" Opacity="0.7"/>
+                                                </Border.Effect>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="#2196f3"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1976d2"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <TextBlock Text="👁 View" FontWeight="Bold"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
 
         <!-- Loading Overlay -->
