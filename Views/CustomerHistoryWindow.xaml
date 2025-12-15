@@ -166,7 +166,19 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Amount Due" Binding="{Binding AmountDue, StringFormat='PKR {0:N2}'}" Width="120"/>
+                <DataGridTextColumn Header="Amount Due" Binding="{Binding AmountDue, StringFormat='PKR {0:N2}'}" Width="120">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#ff9800"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding AmountDue}" Value="0">
+                                    <Setter Property="Foreground" Value="#4caf50"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
                 <DataGridTextColumn Header="Amount Paid" Binding="{Binding AmountPaid, StringFormat='PKR {0:N2}'}" Width="120"/>
                 <DataGridTextColumn Header="Status" Binding="{Binding PaymentStatus}" Width="*">
                     <DataGridTextColumn.ElementStyle>

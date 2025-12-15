@@ -504,6 +504,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 List<Guid> frameIds;
                 int frameCount;
                 decimal perFrameAmount;
+                List<(Guid chargeId, Guid customerId, decimal amount)> createdCharges = new();
                 
                 using (var context = App.GetDbContext())
                 {
@@ -555,6 +556,7 @@ namespace SnookerGameManagementSystem.ViewModels
                                         chargeId, frame.LoserCustomerId.Value, frame.Id, perFrameAmount,
                                         $"Frame charge - {_session.Name}", now);
                                     System.Diagnostics.Debug.WriteLine($"[EndGame]   Created LOSER charge: {perFrameAmount} for customer {frame.LoserCustomerId.Value}");
+                                    createdCharges.Add((chargeId, frame.LoserCustomerId.Value, perFrameAmount));
                                 }
                                 else
                                 {
@@ -572,6 +574,7 @@ namespace SnookerGameManagementSystem.ViewModels
                                         chargeId, frame.WinnerCustomerId.Value, frame.Id, perFrameAmount,
                                         $"Frame charge - {_session.Name}", now);
                                     System.Diagnostics.Debug.WriteLine($"[EndGame]   Created WINNER charge: {perFrameAmount} for customer {frame.WinnerCustomerId.Value}");
+                                    createdCharges.Add((chargeId, frame.WinnerCustomerId.Value, perFrameAmount));
                                 }
                                 else
                                 {
@@ -594,6 +597,7 @@ namespace SnookerGameManagementSystem.ViewModels
                                         chargeId, playerId, frame.Id, splitPerPlayer,
                                         $"Frame charge (split) - {_session.Name}", now);
                                     System.Diagnostics.Debug.WriteLine($"[EndGame]     Created SPLIT charge: {splitPerPlayer} for customer {playerId}");
+                                    createdCharges.Add((chargeId, playerId, splitPerPlayer));
                                 }
                                 break;
                         }
@@ -602,7 +606,116 @@ namespace SnookerGameManagementSystem.ViewModels
                     System.Diagnostics.Debug.WriteLine($"[EndGame] All charges created successfully via SQL");
                 }
 
-                // Step 2: Update frame properties using RAW SQL as well
+                // Step 2: If payment status is PAID, create payment records and allocations
+                if (billingViewModel.PayStatus == PayStatus.PAID)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[EndGame] PayStatus is PAID - Creating payment records and allocations");
+                    
+                    using (var paymentContext = App.GetDbContext())
+                    {
+                        var now = DateTime.Now;
+                        
+                        // Group charges by customer
+                        var chargesByCustomer = createdCharges
+                            .GroupBy(c => c.customerId)
+                            .ToList();
+                        
+                        foreach (var customerGroup in chargesByCustomer)
+                        {
+                            var customerId = customerGroup.Key;
+                            var customerCharges = customerGroup.ToList();
+                            var totalCustomerAmount = customerCharges.Sum(c => c.amount);
+                            
+                            System.Diagnostics.Debug.WriteLine($"[EndGame]   Creating payment for customer {customerId}: {totalCustomerAmount}");
+                            
+                            // Create payment record
+                            var paymentId = Guid.NewGuid();
+                            await paymentContext.Database.ExecuteSqlRawAsync(
+                                "INSERT INTO ledger_payment (id, customer_id, amount_pk, method, received_at) " +
+                                "VALUES ({0}, {1}, {2}, {3}, {4})",
+                                paymentId, customerId, totalCustomerAmount, "Cash", now);
+                            
+                            // Create payment allocations for each charge
+                            foreach (var charge in customerCharges)
+                            {
+                                var allocationId = Guid.NewGuid();
+                                await paymentContext.Database.ExecuteSqlRawAsync(
+                                    "INSERT INTO payment_allocation (id, payment_id, charge_id, allocated_amount_pk, created_at) " +
+                                    "VALUES ({0}, {1}, {2}, {3}, {4})",
+                                    allocationId, paymentId, charge.chargeId, charge.amount, now);
+                                
+                                System.Diagnostics.Debug.WriteLine($"[EndGame]     Created allocation: {charge.amount} for charge {charge.chargeId}");
+                            }
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"[EndGame] All payment records and allocations created");
+                    }
+                }
+                else if (billingViewModel.PayStatus == PayStatus.PARTIAL && billingViewModel.PartialPaymentAmount > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[EndGame] PayStatus is PARTIAL - Creating partial payment records and allocations");
+                    System.Diagnostics.Debug.WriteLine($"[EndGame] Partial payment amount: {billingViewModel.PartialPaymentAmount}");
+                    
+                    using (var paymentContext = App.GetDbContext())
+                    {
+                        var now = DateTime.Now;
+                        
+                        // Group charges by customer
+                        var chargesByCustomer = createdCharges
+                            .GroupBy(c => c.customerId)
+                            .ToList();
+                        
+                        // Calculate total charges across all customers
+                        decimal totalAllCharges = createdCharges.Sum(c => c.amount);
+                        
+                        // Distribute the partial payment proportionally across customers
+                        foreach (var customerGroup in chargesByCustomer)
+                        {
+                            var customerId = customerGroup.Key;
+                            var customerCharges = customerGroup.ToList();
+                            var totalCustomerCharges = customerCharges.Sum(c => c.amount);
+                            
+                            // Calculate proportional payment for this customer
+                            var customerPaymentAmount = totalAllCharges > 0 
+                                ? (totalCustomerCharges / totalAllCharges) * billingViewModel.PartialPaymentAmount 
+                                : 0;
+                            
+
+                            System.Diagnostics.Debug.WriteLine($"[EndGame]   Creating partial payment for customer {customerId}: {customerPaymentAmount} (of total {totalCustomerCharges})");
+                            System.Diagnostics.Debug.WriteLine($"[EndGame]   MATH CHECK: Charge={totalCustomerCharges:F2}, Payment={customerPaymentAmount:F2}, Remaining={totalCustomerCharges - customerPaymentAmount:F2}");
+                            
+                            // Create payment record for this customer's portion
+                            var paymentId = Guid.NewGuid();
+                            await paymentContext.Database.ExecuteSqlRawAsync(
+                                "INSERT INTO ledger_payment (id, customer_id, amount_pk, method, received_at) " +
+                                "VALUES ({0}, {1}, {2}, {3}, {4})",
+                                paymentId, customerId, customerPaymentAmount, "Cash", now);
+                            
+                            // Allocate payment to charges (FIFO)
+                            decimal remainingPayment = customerPaymentAmount;
+                            foreach (var charge in customerCharges.OrderBy(c => c.chargeId))
+                            {
+                                if (remainingPayment <= 0) break;
+                                
+                                var toAllocate = Math.Min(remainingPayment, charge.amount);
+                                
+                                var allocationId = Guid.NewGuid();
+                                await paymentContext.Database.ExecuteSqlRawAsync(
+                                    "INSERT INTO payment_allocation (id, payment_id, charge_id, allocated_amount_pk, created_at) " +
+                                    "VALUES ({0}, {1}, {2}, {3}, {4})",
+                                    allocationId, paymentId, charge.chargeId, toAllocate, now);
+                                
+                                System.Diagnostics.Debug.WriteLine($"[EndGame]     Created partial allocation: {toAllocate} for charge {charge.chargeId}");
+                                
+                                remainingPayment -= toAllocate;
+                            }
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"[EndGame] All partial payment records and allocations created");
+                    }
+                }
+
+                // Step 3: Update frame properties using RAW SQL as well
                 using (var frameContext = App.GetDbContext())
                 {
                     // Update each frame's payment info using RAW SQL

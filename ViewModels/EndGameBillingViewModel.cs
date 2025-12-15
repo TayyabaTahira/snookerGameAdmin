@@ -33,6 +33,7 @@ namespace SnookerGameManagementSystem.ViewModels
         private decimal _overtimeAmount;
         private decimal _lumpSumFine;
         private decimal _discount;
+        private decimal _partialPaymentAmount;
         private PayerModeOption? _selectedPayerMode;
         private PayStatusOption? _selectedPayStatus;
 
@@ -211,6 +212,14 @@ namespace SnookerGameManagementSystem.ViewModels
             }
         }
 
+        public decimal PartialPaymentAmount
+        {
+            get => _partialPaymentAmount;
+            set => SetProperty(ref _partialPaymentAmount, value);
+        }
+
+        public bool IsPartialPaymentVisible => _selectedPayStatus?.Value == PayStatus.PARTIAL;
+
         public decimal TotalAmount => BaseRateTotal + _overtimeAmount + _lumpSumFine - _discount;
 
         public string TotalAmountDisplay => $"PKR {TotalAmount:N2}";
@@ -234,7 +243,13 @@ namespace SnookerGameManagementSystem.ViewModels
         public PayStatusOption? SelectedPayStatus
         {
             get => _selectedPayStatus;
-            set => SetProperty(ref _selectedPayStatus, value);
+            set
+            {
+                if (SetProperty(ref _selectedPayStatus, value))
+                {
+                    OnPropertyChanged(nameof(IsPartialPaymentVisible));
+                }
+            }
         }
 
         public PayerMode PayerMode => _selectedPayerMode?.Value ?? PayerMode.LOSER;

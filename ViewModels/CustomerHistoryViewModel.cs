@@ -12,6 +12,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public string GameType { get; set; } = string.Empty;
         public string Result { get; set; } = string.Empty;
         public int WinStreak { get; set; }
+        public decimal TotalCharged { get; set; }
         public decimal AmountDue { get; set; }
         public decimal AmountPaid { get; set; }
         public string PaymentStatus { get; set; } = string.Empty;
@@ -145,7 +146,8 @@ namespace SnookerGameManagementSystem.ViewModels
                         GameType = gameType?.Name ?? "Unknown",
                         Result = frame.WinnerCustomerId == _customer.Id ? "Win" : "Lose",
                         WinStreak = winStreak,
-                        AmountDue = chargeAmount,
+                        TotalCharged = chargeAmount,
+                        AmountDue = chargeAmount - paidAmount,  // This shows the remaining balance
                         AmountPaid = paidAmount,
                         PaymentStatus = chargeAmount == 0 ? "No Charge" : 
                                        paidAmount >= chargeAmount ? "Paid" : 
@@ -157,9 +159,9 @@ namespace SnookerGameManagementSystem.ViewModels
                 TotalGames = historyItems.Count;
                 
                 // Calculate totals
-                TotalCharged = historyItems.Sum(h => h.AmountDue);
-                TotalPaid = historyItems.Sum(h => h.AmountPaid);
-                BalanceDue = TotalCharged - TotalPaid;
+                TotalCharged = historyItems.Sum(h => h.TotalCharged);  // Total of all charges
+                TotalPaid = historyItems.Sum(h => h.AmountPaid);        // Total of all payments
+                BalanceDue = historyItems.Sum(h => h.AmountDue);        // Sum of remaining balances (already deducted)
                 
                 System.Diagnostics.Debug.WriteLine($"[CustomerHistory] Summary:");
                 System.Diagnostics.Debug.WriteLine($"[CustomerHistory]   Total Games: {TotalGames}");
