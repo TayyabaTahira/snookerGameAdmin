@@ -109,6 +109,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
                 {
                     ErrorMessage = "Username and password are required";
+                    MessageBox.Show("Username and password are required", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -131,6 +132,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine("[LoginViewModel] Login failed: User is null");
                     ErrorMessage = "Invalid username or password";
+                    MessageBox.Show("Invalid username or password. Please try again.", "Login Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
@@ -138,6 +140,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] EXCEPTION: {ex.GetType().Name}: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"[LoginViewModel] Stack: {ex.StackTrace}");
                 ErrorMessage = $"Login failed: {ex.Message}";
+                MessageBox.Show($"Login failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
