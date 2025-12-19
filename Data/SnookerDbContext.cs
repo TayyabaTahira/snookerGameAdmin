@@ -55,6 +55,8 @@ namespace SnookerGameManagementSystem.Data
                 entity.Property(e => e.Id)
                     .HasColumnName("id");
                 entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(50).IsRequired();
+                entity.Property(e => e.MinPlayers).HasColumnName("min_players");
+                entity.Property(e => e.MaxPlayers).HasColumnName("max_players");
                 entity.HasIndex(e => e.Name).IsUnique();
             });
 
@@ -100,6 +102,7 @@ namespace SnookerGameManagementSystem.Data
                     .HasColumnName("id");
                 entity.Property(e => e.FullName).HasColumnName("full_name").HasMaxLength(120).IsRequired();
                 entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(30);
+                entity.Property(e => e.InitialCreditPk).HasColumnName("initial_credit_pk").HasColumnType("decimal(10,2)");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at");
                 
                 // Ignore computed property

@@ -163,20 +163,36 @@ namespace SnookerGameManagementSystem.ViewModels
         private int CalculateWinStreak(Guid customerId)
         {
             int streak = 0;
+            // Order frames by most recent first
             var frames = _session.Frames.OrderByDescending(f => f.StartedAt).ToList();
             
+            System.Diagnostics.Debug.WriteLine($"[CalculateWinStreak] Customer: {customerId}, Total frames: {frames.Count}");
+            
+            // Count consecutive wins from most recent frame backwards
             foreach (var frame in frames)
             {
-                if (frame.WinnerCustomerId == customerId)
+                System.Diagnostics.Debug.WriteLine($"[CalculateWinStreak]   Frame started: {frame.StartedAt}, Ended: {frame.EndedAt}, Winner: {frame.WinnerCustomerId}");
+                
+                // Only count finished frames with a winner
+                if (frame.EndedAt != null && frame.WinnerCustomerId == customerId)
                 {
                     streak++;
+                    System.Diagnostics.Debug.WriteLine($"[CalculateWinStreak]   WIN - Streak now: {streak}");
                 }
+                else if (frame.EndedAt != null)
+                {
+                    // Frame finished but this player didn't win, streak ends
+                    System.Diagnostics.Debug.WriteLine($"[CalculateWinStreak]   LOSS - Streak ends at: {streak}");
+                    break;
+                }
+                // Skip unfinished frames (current frame)
                 else
                 {
-                    break;
+                    System.Diagnostics.Debug.WriteLine($"[CalculateWinStreak]   UNFINISHED - Skipping");
                 }
             }
             
+            System.Diagnostics.Debug.WriteLine($"[CalculateWinStreak] Final streak for customer {customerId}: {streak}");
             return streak;
         }
 
@@ -189,14 +205,12 @@ namespace SnookerGameManagementSystem.ViewModels
                 _session = refreshedSession;
                 FrameCount = _session.Frames.Count;
                 
-                // Only update win streaks if session is still active (not after it ends)
-                if (!_isClosed)
+                // Update win streaks for existing players
+                foreach (var player in Players)
                 {
-                    // Update win streaks for existing players
-                    foreach (var player in Players)
-                    {
-                        player.WinStreak = CalculateWinStreak(player.CustomerId);
-                    }
+                    var newStreak = CalculateWinStreak(player.CustomerId);
+                    player.WinStreak = newStreak;
+                    System.Diagnostics.Debug.WriteLine($"[RefreshSessionData] Player {player.Name} win streak updated to: {newStreak}");
                 }
                 
                 OnPropertyChanged(nameof(TableName));
@@ -229,6 +243,40 @@ namespace SnookerGameManagementSystem.ViewModels
                             MessageBoxButton.OK,
                             MessageBoxImage.Information);
                         return;
+                    }
+
+                    // Check if customer has active session
+                    var hasActiveSession = await CheckCustomerHasActiveSession(customer.Id);
+                    if (hasActiveSession)
+                    {
+                        var result = MessageBox.Show(
+                            $"{customer.FullName} is already playing in another active game.\n\nDo you want to add them anyway?",
+                            "Player Already Active",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning);
+                        
+                        if (result == MessageBoxResult.No)
+                        {
+                            return;
+                        }
+                    }
+
+                    // Check game type player limits if set
+                    if (_session.GameTypeId != null)
+                    {
+                        using (var context = App.GetDbContext())
+                        {
+                            var gameType = await context.GameTypes.FindAsync(_session.GameTypeId.Value);
+                            if (gameType != null && Players.Count >= gameType.MaxPlayers)
+                            {
+                                MessageBox.Show(
+                                    $"Cannot add more players. Maximum {gameType.MaxPlayers} players allowed for {gameType.Name}.",
+                                    "Player Limit Reached",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Warning);
+                                return;
+                            }
+                        }
                     }
 
                     // Add to list
@@ -305,6 +353,38 @@ namespace SnookerGameManagementSystem.ViewModels
                     "Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+            }
+        }
+
+        private async Task<bool> CheckCustomerHasActiveSession(Guid customerId)
+        {
+            try
+            {
+                using (var context = App.GetDbContext())
+                {
+                    // Check if customer is in any active session's frames (excluding current session)
+                    var hasActiveSession = await context.FrameParticipants
+                        .Where(fp => fp.CustomerId == customerId)
+                        .Join(
+                            context.Frames,
+                            fp => fp.FrameId,
+                            f => f.Id,
+                            (fp, f) => f
+                        )
+                        .Join(
+                            context.Sessions,
+                            f => f.SessionId,
+                            s => s.Id,
+                            (f, s) => s
+                        )
+                        .AnyAsync(s => s.Status == SessionStatus.IN_PROGRESS && s.Id != _sessionId);
+
+                    return hasActiveSession;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -610,10 +690,12 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (billingViewModel.PayStatus == PayStatus.PAID)
                 {
                     System.Diagnostics.Debug.WriteLine($"[EndGame] PayStatus is PAID - Creating payment records and allocations");
+                    System.Diagnostics.Debug.WriteLine($"[EndGame] Payment Method: {billingViewModel.SelectedPaymentMethod}");
                     
                     using (var paymentContext = App.GetDbContext())
                     {
                         var now = DateTime.Now;
+                        var paymentMethod = billingViewModel.SelectedPaymentMethod ?? "Cash";
                         
                         // Group charges by customer
                         var chargesByCustomer = createdCharges
@@ -626,14 +708,14 @@ namespace SnookerGameManagementSystem.ViewModels
                             var customerCharges = customerGroup.ToList();
                             var totalCustomerAmount = customerCharges.Sum(c => c.amount);
                             
-                            System.Diagnostics.Debug.WriteLine($"[EndGame]   Creating payment for customer {customerId}: {totalCustomerAmount}");
+                            System.Diagnostics.Debug.WriteLine($"[EndGame]   Creating payment for customer {customerId}: {totalCustomerAmount} via {paymentMethod}");
                             
-                            // Create payment record
+                            // Create payment record with selected method
                             var paymentId = Guid.NewGuid();
                             await paymentContext.Database.ExecuteSqlRawAsync(
                                 "INSERT INTO ledger_payment (id, customer_id, amount_pk, method, received_at) " +
                                 "VALUES ({0}, {1}, {2}, {3}, {4})",
-                                paymentId, customerId, totalCustomerAmount, "Cash", now);
+                                paymentId, customerId, totalCustomerAmount, paymentMethod, now);
                             
                             // Create payment allocations for each charge
                             foreach (var charge in customerCharges)
@@ -655,10 +737,12 @@ namespace SnookerGameManagementSystem.ViewModels
                 {
                     System.Diagnostics.Debug.WriteLine($"[EndGame] PayStatus is PARTIAL - Creating partial payment records and allocations");
                     System.Diagnostics.Debug.WriteLine($"[EndGame] Partial payment amount: {billingViewModel.PartialPaymentAmount}");
+                    System.Diagnostics.Debug.WriteLine($"[EndGame] Payment Method: {billingViewModel.SelectedPaymentMethod}");
                     
                     using (var paymentContext = App.GetDbContext())
                     {
                         var now = DateTime.Now;
+                        var paymentMethod = billingViewModel.SelectedPaymentMethod ?? "Cash";
                         
                         // Group charges by customer
                         var chargesByCustomer = createdCharges
@@ -681,15 +765,15 @@ namespace SnookerGameManagementSystem.ViewModels
                                 : 0;
                             
 
-                            System.Diagnostics.Debug.WriteLine($"[EndGame]   Creating partial payment for customer {customerId}: {customerPaymentAmount} (of total {totalCustomerCharges})");
+                            System.Diagnostics.Debug.WriteLine($"[EndGame]   Creating partial payment for customer {customerId}: {customerPaymentAmount} (of total {totalCustomerCharges}) via {paymentMethod}");
                             System.Diagnostics.Debug.WriteLine($"[EndGame]   MATH CHECK: Charge={totalCustomerCharges:F2}, Payment={customerPaymentAmount:F2}, Remaining={totalCustomerCharges - customerPaymentAmount:F2}");
                             
-                            // Create payment record for this customer's portion
+                            // Create payment record for this customer's portion with selected method
                             var paymentId = Guid.NewGuid();
                             await paymentContext.Database.ExecuteSqlRawAsync(
                                 "INSERT INTO ledger_payment (id, customer_id, amount_pk, method, received_at) " +
                                 "VALUES ({0}, {1}, {2}, {3}, {4})",
-                                paymentId, customerId, customerPaymentAmount, "Cash", now);
+                                paymentId, customerId, customerPaymentAmount, paymentMethod, now);
                             
                             // Allocate payment to charges (FIFO)
                             decimal remainingPayment = customerPaymentAmount;

@@ -57,13 +57,13 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#4a4a5e"/>
+                    <Setter Property="BorderBrush" Value="#5A8FA0"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="Background" Value="#3a3a4e"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="15,8"/>
@@ -84,16 +84,16 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4a4a5e"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="DeleteButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Background" Value="#ff6b6b"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#d93550"/>
+                    <Setter Property="Background" Value="#e94560"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -253,7 +253,7 @@
                             Width="200"
                             Height="4"
                             Margin="0,20,0,0"
-                            Foreground="#e94560"/>
+                            Foreground="#5A8FA0"/>
             </StackPanel>
         </Border>
     </Grid>

@@ -219,7 +219,8 @@ namespace SnookerGameManagementSystem.ViewModels
                         GamesWon = rangeFrames.Count(f => f.WinnerCustomerId == c.Id)
                     })
                     .Where(x => x.GamesPlayed > 0)
-                    .OrderByDescending(x => x.GamesPlayed)
+                    .OrderByDescending(x => x.GamesWon)
+                    .ThenByDescending(x => x.GamesPlayed)
                     .Take(10)
                     .Select(x => new TopPlayerViewModel
                     {
@@ -232,18 +233,27 @@ namespace SnookerGameManagementSystem.ViewModels
                 
                 TopPlayers = new ObservableCollection<TopPlayerViewModel>(topPlayersList);
                 
-                // Recent games - based on date range (last 20 in range)
+                // Recent games - based on date range (last 20 in range) with correct frame times
                 var recentFrames = rangeFrames
-                    .OrderByDescending(f => f.EndedAt ?? f.StartedAt)
+                    .Where(f => f.EndedAt != null) // Only show completed frames
+                    .OrderByDescending(f => f.EndedAt)
                     .Take(20)
-                    .Select(f => new RecentGameViewModel
+                    .Select(f =>
                     {
-                        Date = (f.EndedAt ?? f.StartedAt).ToString("MMM dd, HH:mm"),
-                        Players = string.Join(" vs ", f.Participants.Select(p => p.Customer?.FullName ?? "Unknown")),
-                        Winner = f.WinnerCustomerId != null ?
-                            f.Participants.FirstOrDefault(p => p.CustomerId == f.WinnerCustomerId)?.Customer?.FullName ?? "Unknown" :
-                            "-",
-                        Amount = $"PKR {f.TotalAmountPk:N2}"
+                        var frameEndTime = f.EndedAt ?? DateTime.Now;
+                        var frameDuration = frameEndTime - f.StartedAt;
+                        var durationStr = $"{(int)frameDuration.TotalHours:D2}:{frameDuration.Minutes:D2}:{frameDuration.Seconds:D2}";
+                        
+                        return new RecentGameViewModel
+                        {
+                            Date = f.EndedAt.Value.ToString("MMM dd, HH:mm"),
+                            Players = string.Join(" vs ", f.Participants.Select(p => p.Customer?.FullName ?? "Unknown")),
+                            Winner = f.WinnerCustomerId != null ?
+                                f.Participants.FirstOrDefault(p => p.CustomerId == f.WinnerCustomerId)?.Customer?.FullName ?? "Unknown" :
+                                "-",
+                            Duration = durationStr,
+                            Amount = $"PKR {f.TotalAmountPk:N2}"
+                        };
                     })
                     .ToList();
                 
@@ -274,6 +284,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public string Date { get; set; } = string.Empty;
         public string Players { get; set; } = string.Empty;
         public string Winner { get; set; } = string.Empty;
+        public string Duration { get; set; } = string.Empty;
         public string Amount { get; set; } = string.Empty;
     }
 }

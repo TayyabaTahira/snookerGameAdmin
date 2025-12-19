@@ -14,7 +14,7 @@
     <Window.Resources>
         <!-- Modern Button Style -->
         <Style x:Key="ModernButton" TargetType="Button">
-            <Setter Property="Background" Value="#16213e"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -34,7 +34,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#0f3460"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Background" Value="#3a3a4e"/>
@@ -68,7 +68,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#e94560"/>
+                    <Setter Property="BorderBrush" Value="#5A8FA0"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -98,7 +98,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#e94560"/>
+                    <Setter Property="BorderBrush" Value="#5A8FA0"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -111,7 +111,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#0f3460" Padding="20">
+        <Border Grid.Row="0" Background="#4D6A92" Padding="20">
             <StackPanel>
                 <TextBlock Text="🎱" Foreground="White" FontSize="50" FontFamily="Segoe UI Emoji" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                 <TextBlock Text="SNOOKER CLUB" 
@@ -121,7 +121,7 @@
                           HorizontalAlignment="Center"/>
                 <TextBlock Text="Management System" 
                           FontSize="12" 
-                          Foreground="#a0a0b0"
+                          Foreground="#E8F0F7"
                           HorizontalAlignment="Center"
                           Margin="0,5,0,0"/>
             </StackPanel>
@@ -156,7 +156,7 @@
 
             <!-- Error Message -->
             <TextBlock Text="{Binding ErrorMessage}"
-                      Foreground="#e94560"
+                      Foreground="#ff6b6b"
                       FontSize="12"
                       TextWrapping="Wrap"
                       HorizontalAlignment="Center"
@@ -175,7 +175,7 @@
 
             <!-- Loading Indicator -->
             <TextBlock Text="Logging in..."
-                      Foreground="#a0a0b0"
+                      Foreground="#A2C6E9"
                       FontSize="12"
                       HorizontalAlignment="Center"
                       Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}"/>

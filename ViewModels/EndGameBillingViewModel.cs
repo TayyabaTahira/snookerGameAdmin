@@ -23,6 +23,8 @@ namespace SnookerGameManagementSystem.ViewModels
         public string Loser { get; set; } = string.Empty;
         public decimal BaseRate { get; set; }
         public string BaseRateDisplay => $"PKR {BaseRate:N2}";
+        public DateTime StartedAt { get; set; }
+        public DateTime? EndedAt { get; set; }
     }
 
     public class EndGameBillingViewModel : ViewModelBase
@@ -34,6 +36,7 @@ namespace SnookerGameManagementSystem.ViewModels
         private decimal _lumpSumFine;
         private decimal _discount;
         private decimal _partialPaymentAmount;
+        private string? _selectedPaymentMethod;
         private PayerModeOption? _selectedPayerMode;
         private PayStatusOption? _selectedPayStatus;
 
@@ -42,88 +45,56 @@ namespace SnookerGameManagementSystem.ViewModels
             _session = session;
             _baseRatePerFrame = baseRate;
 
+            // Initialize payment methods
+            PaymentMethods = new ObservableCollection<string>(LedgerPayment.AvailablePaymentMethods);
+            _selectedPaymentMethod = "Cash";
+
             // Build frame summaries
             FrameSummaries = new ObservableCollection<FrameSummary>();
             int frameNumber = 1;
             foreach (var frame in _session.Frames.OrderBy(f => f.StartedAt))
             {
-                var duration = frame.EndedAt.HasValue 
-                    ? (frame.EndedAt.Value - frame.StartedAt) 
-                    : (DateTime.Now - frame.StartedAt);
+                // Calculate actual frame duration
+                var frameEndTime = frame.EndedAt ?? DateTime.Now;
+                var frameDuration = frameEndTime - frame.StartedAt;
                 
-                // Try to get winner name from navigation property first, then fallback to participants
                 var winnerName = "Not Set";
                 if (frame.WinnerCustomer != null)
                 {
                     winnerName = frame.WinnerCustomer.FullName;
-                    System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: Got winner from WinnerCustomer: {winnerName}");
                 }
                 else if (frame.WinnerCustomerId != null)
                 {
-                    // Fallback: Try to find in participants
                     var winnerParticipant = frame.Participants.FirstOrDefault(p => p.CustomerId == frame.WinnerCustomerId.Value);
                     if (winnerParticipant?.Customer != null)
                     {
                         winnerName = winnerParticipant.Customer.FullName;
-                        System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: Got winner from Participants: {winnerName}");
                     }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: Winner participant not found or has no customer");
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: No WinnerCustomerId set");
                 }
 
-                // Try to get loser name from navigation property first, then fallback to participants
                 var loserName = "Not Set";
                 if (frame.LoserCustomer != null)
                 {
                     loserName = frame.LoserCustomer.FullName;
-                    System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: Got loser from LoserCustomer: {loserName}");
                 }
                 else if (frame.LoserCustomerId != null)
                 {
-                    // Fallback: Try to find in participants
                     var loserParticipant = frame.Participants.FirstOrDefault(p => p.CustomerId == frame.LoserCustomerId.Value);
                     if (loserParticipant?.Customer != null)
                     {
                         loserName = loserParticipant.Customer.FullName;
-                        System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: Got loser from Participants: {loserName}");
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: Loser participant not found or has no customer");
                     }
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}: No LoserCustomerId set");
-                }
-
-                // Debug output
-                System.Diagnostics.Debug.WriteLine($"[EndGameBillingViewModel] Frame {frameNumber}:");
-                System.Diagnostics.Debug.WriteLine($"  WinnerCustomerId: {frame.WinnerCustomerId}");
-                System.Diagnostics.Debug.WriteLine($"  WinnerCustomer is null: {frame.WinnerCustomer == null}");
-                System.Diagnostics.Debug.WriteLine($"  LoserCustomerId: {frame.LoserCustomerId}");
-                System.Diagnostics.Debug.WriteLine($"  LoserCustomer is null: {frame.LoserCustomer == null}");
-                System.Diagnostics.Debug.WriteLine($"  Participants count: {frame.Participants.Count}");
-                foreach (var p in frame.Participants)
-                {
-                    System.Diagnostics.Debug.WriteLine($"    Participant: {p.CustomerId}, Customer null? {p.Customer == null}, Name: {p.Customer?.FullName}");
-                }
-                System.Diagnostics.Debug.WriteLine($"  Winner name resolved: {winnerName}");
-                System.Diagnostics.Debug.WriteLine($"  Loser name resolved: {loserName}");
 
                 FrameSummaries.Add(new FrameSummary
                 {
                     FrameNumber = frameNumber++,
-                    Duration = $"{(int)duration.TotalHours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}",
+                    Duration = $"{(int)frameDuration.TotalHours:D2}:{frameDuration.Minutes:D2}:{frameDuration.Seconds:D2}",
                     Winner = winnerName,
                     Loser = loserName,
-                    BaseRate = frame.BaseRatePk
+                    BaseRate = frame.BaseRatePk,
+                    StartedAt = frame.StartedAt,
+                    EndedAt = frame.EndedAt
                 });
             }
 
@@ -148,6 +119,7 @@ namespace SnookerGameManagementSystem.ViewModels
         }
 
         public ObservableCollection<FrameSummary> FrameSummaries { get; }
+        public ObservableCollection<string> PaymentMethods { get; }
 
         public int TotalFrames => _session.Frames.Count;
 
@@ -218,7 +190,15 @@ namespace SnookerGameManagementSystem.ViewModels
             set => SetProperty(ref _partialPaymentAmount, value);
         }
 
+        public string? SelectedPaymentMethod
+        {
+            get => _selectedPaymentMethod;
+            set => SetProperty(ref _selectedPaymentMethod, value);
+        }
+
         public bool IsPartialPaymentVisible => _selectedPayStatus?.Value == PayStatus.PARTIAL;
+        
+        public bool IsPaymentMethodVisible => _selectedPayStatus?.Value == PayStatus.PAID || _selectedPayStatus?.Value == PayStatus.PARTIAL;
 
         public decimal TotalAmount => BaseRateTotal + _overtimeAmount + _lumpSumFine - _discount;
 
@@ -248,6 +228,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (SetProperty(ref _selectedPayStatus, value))
                 {
                     OnPropertyChanged(nameof(IsPartialPaymentVisible));
+                    OnPropertyChanged(nameof(IsPaymentMethodVisible));
                 }
             }
         }

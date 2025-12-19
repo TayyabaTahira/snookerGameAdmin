@@ -154,15 +154,15 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#e94560"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#5A8FA0"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#e94560"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#5A8FA0"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#e94560"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#5A8FA0"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -172,7 +172,7 @@
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="20,12"/>
@@ -192,7 +192,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#d83551"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -220,7 +220,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#e94560"/>
+                    <Setter Property="BorderBrush" Value="#5A8FA0"/>
                     <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
@@ -314,7 +314,7 @@
                                             <TextBlock Grid.Row="0" Grid.Column="0" 
                                                       Text="{Binding FrameNumber, StringFormat='Frame {0}'}" 
                                                       FontWeight="Bold" 
-                                                      Foreground="#e94560"
+                                                      Foreground="#5A8FA0"
                                                       Margin="0,0,15,5"/>
                                             
                                             <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
@@ -366,7 +366,7 @@
 
                 <!-- Total -->
                 <Border Background="#16213e"
-                       BorderBrush="#e94560"
+                       BorderBrush="#5A8FA0"
                        BorderThickness="2"
                        CornerRadius="6"
                        Padding="20"
@@ -392,14 +392,14 @@
 
                 <!-- Who Will Pay Display -->
                 <Border Background="#16213e"
-                       BorderBrush="#2196f3"
+                       BorderBrush="#A2C6E9"
                        BorderThickness="2"
                        CornerRadius="6"
                        Padding="15"
                        Margin="0,0,0,15">
                     <TextBlock Text="{Binding WhoWillPayDisplay}" 
                               FontSize="13" 
-                              Foreground="#2196f3"
+                              Foreground="#A2C6E9"
                               TextWrapping="Wrap"/>
                 </Border>
 
@@ -418,6 +418,20 @@
                     <TextBlock Text="Partial Payment Amount (PKR)" FontWeight="Bold" Margin="0,0,0,5"/>
                     <TextBox Text="{Binding PartialPaymentAmount, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Text="Enter the amount being paid now (remaining will be added as credit)" 
+                              FontSize="11" 
+                              Foreground="#a0a0b0"
+                              Margin="0,5,0,0"
+                              TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Payment Method (visible when Paid Now or Partial is selected) -->
+                <StackPanel Visibility="{Binding IsPaymentMethodVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+                           Margin="0,0,0,15">
+                    <TextBlock Text="Payment Method" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding PaymentMethods}"
+                             SelectedItem="{Binding SelectedPaymentMethod}"
+                             Tag="How was payment received?"/>
+                    <TextBlock Text="Select how the payment was received (Cash, Bank Transfer, EasyPaisa, JazzCash, etc.)" 
                               FontSize="11" 
                               Foreground="#a0a0b0"
                               Margin="0,5,0,0"

@@ -10,6 +10,7 @@ namespace SnookerGameManagementSystem.ViewModels
         private readonly CustomerService _customerService;
         private string _fullName = string.Empty;
         private string _phone = string.Empty;
+        private decimal _initialCredit = 0;
 
         public EditCustomerViewModel(Customer? customer, CustomerService customerService)
         {
@@ -20,11 +21,13 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 _fullName = _existingCustomer.FullName;
                 _phone = _existingCustomer.Phone ?? string.Empty;
+                _initialCredit = _existingCustomer.InitialCreditPk;
             }
         }
 
         public string DialogTitle => _existingCustomer == null ? "Add Customer" : "Edit Customer";
         public string SaveButtonText => _existingCustomer == null ? "Add" : "Save";
+        public bool IsInitialCreditVisible => _existingCustomer == null; // Only show for new customers
 
         public string FullName
         {
@@ -44,6 +47,12 @@ namespace SnookerGameManagementSystem.ViewModels
             set => SetProperty(ref _phone, value);
         }
 
+        public decimal InitialCredit
+        {
+            get => _initialCredit;
+            set => SetProperty(ref _initialCredit, value);
+        }
+
         public bool CanSave => !string.IsNullOrWhiteSpace(_fullName);
 
         public async Task<bool> SaveAsync()
@@ -52,12 +61,18 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 if (_existingCustomer == null)
                 {
-                    // Create new customer
-                    await _customerService.CreateCustomerAsync(_fullName, _phone);
+                    // Create new customer with initial credit
+                    var newCustomer = new Customer
+                    {
+                        FullName = _fullName,
+                        Phone = _phone,
+                        InitialCreditPk = _initialCredit
+                    };
+                    await _customerService.CreateCustomerAsync(newCustomer.FullName, newCustomer.Phone, newCustomer.InitialCreditPk);
                 }
                 else
                 {
-                    // Update existing customer
+                    // Update existing customer (don't update initial credit)
                     _existingCustomer.FullName = _fullName;
                     _existingCustomer.Phone = _phone;
                     await _customerService.UpdateCustomerAsync(_existingCustomer);

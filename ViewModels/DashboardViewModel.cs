@@ -409,7 +409,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public int FrameCount => ActiveSession?.Frames.Count ?? 0;
         
         public string StatusBadge => HasActiveSession ? "In Use" : "Available";
-        public string StatusColor => HasActiveSession ? "#e94560" : "#4caf50";
+        public string StatusColor => HasActiveSession ? "#5A8FA0" : "#4caf50";
         public bool ShowSessionInfo => HasActiveSession && ActiveSession != null;
         
         public TimeSpan ElapsedTime => HasActiveSession && ActiveSession != null 

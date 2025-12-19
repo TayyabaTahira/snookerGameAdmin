@@ -12,6 +12,8 @@ namespace SnookerGameManagementSystem.ViewModels
         private string _gameTypeName = string.Empty;
         private decimal _baseRate;
         private decimal _overtimeRate;
+        private int _minPlayers = 2;
+        private int _maxPlayers = 4;
 
         public EditGameTypeViewModel(GameType? gameType)
         {
@@ -22,6 +24,8 @@ namespace SnookerGameManagementSystem.ViewModels
             if (_existingGameType != null)
             {
                 _gameTypeName = _existingGameType.Name;
+                _minPlayers = _existingGameType.MinPlayers ?? 2;
+                _maxPlayers = _existingGameType.MaxPlayers ?? 4;
                 
                 // Load first rule if exists
                 var firstRule = _existingGameType.GameRules?.FirstOrDefault();
@@ -72,10 +76,36 @@ namespace SnookerGameManagementSystem.ViewModels
             }
         }
 
+        public int MinPlayers
+        {
+            get => _minPlayers;
+            set
+            {
+                if (SetProperty(ref _minPlayers, value))
+                {
+                    OnPropertyChanged(nameof(CanSave));
+                }
+            }
+        }
+
+        public int MaxPlayers
+        {
+            get => _maxPlayers;
+            set
+            {
+                if (SetProperty(ref _maxPlayers, value))
+                {
+                    OnPropertyChanged(nameof(CanSave));
+                }
+            }
+        }
+
         public bool CanSave =>
             !string.IsNullOrWhiteSpace(_gameTypeName) &&
             _baseRate > 0 &&
-            _overtimeRate >= 0;
+            _overtimeRate >= 0 &&
+            _minPlayers > 0 &&
+            _maxPlayers >= _minPlayers;
 
         public async Task<bool> SaveAsync()
         {
@@ -83,12 +113,23 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 if (_existingGameType == null)
                 {
-                    // Create new game type
-                    var gameType = await _gameTypeService.CreateGameTypeAsync(_gameTypeName);
+                    // Create new game type with player limits
+                    var gameType = new GameType
+                    {
+                        Name = _gameTypeName,
+                        MinPlayers = _minPlayers,
+                        MaxPlayers = _maxPlayers
+                    };
+                    var createdGameType = await _gameTypeService.CreateGameTypeAsync(gameType.Name);
+                    
+                    // Update player limits
+                    createdGameType.MinPlayers = _minPlayers;
+                    createdGameType.MaxPlayers = _maxPlayers;
+                    await _gameTypeService.UpdateGameTypeAsync(createdGameType);
 
                     // Create default rule
                     await _gameRuleService.CreateGameRuleAsync(
-                        gameType.Id,
+                        createdGameType.Id,
                         _baseRate,
                         _overtimeRate);
                 }
@@ -96,6 +137,8 @@ namespace SnookerGameManagementSystem.ViewModels
                 {
                     // Update existing game type
                     _existingGameType.Name = _gameTypeName;
+                    _existingGameType.MinPlayers = _minPlayers;
+                    _existingGameType.MaxPlayers = _maxPlayers;
                     await _gameTypeService.UpdateGameTypeAsync(_existingGameType);
 
                     // Update first rule or create if doesn't exist

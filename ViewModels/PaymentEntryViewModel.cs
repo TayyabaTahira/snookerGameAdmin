@@ -13,6 +13,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public decimal ChargeAmount { get; set; }
         public decimal AllocatedAmount { get; set; }
         public decimal RemainingAmount { get; set; }
+        public bool IsInitialCredit { get; set; } = false;
     }
 
     public class PaymentEntryViewModel : ViewModelBase
@@ -24,7 +25,9 @@ namespace SnookerGameManagementSystem.ViewModels
         private string? _selectedPaymentMethod;
         private string _customerName = string.Empty;
         private decimal _currentBalance;
+        private decimal _initialCredit;
         private RelayCommand? _processPaymentCommand;
+        private string _errorMessage = string.Empty;
 
         public event EventHandler? PaymentProcessed;
 
@@ -34,10 +37,7 @@ namespace SnookerGameManagementSystem.ViewModels
             _ledgerService = ledgerService;
             _customerService = customerService;
 
-            PaymentMethods = new ObservableCollection<string>
-            {
-                "Cash", "Card", "Bank Transfer", "Other"
-            };
+            PaymentMethods = new ObservableCollection<string>(LedgerPayment.AvailablePaymentMethods);
 
             _selectedPaymentMethod = "Cash";
 
@@ -53,17 +53,14 @@ namespace SnookerGameManagementSystem.ViewModels
                 if (customer != null)
                 {
                     CustomerName = customer.FullName;
+                    _initialCredit = customer.InitialCreditPk;
                 }
 
                 CurrentBalance = await _ledgerService.GetCustomerBalanceAsync(_customerId);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error loading customer info: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ErrorMessage = $"Error loading customer info: {ex.Message}";
             }
         }
 
@@ -90,6 +87,8 @@ namespace SnookerGameManagementSystem.ViewModels
             {
                 if (SetProperty(ref _paymentAmount, value))
                 {
+                    ErrorMessage = string.Empty;
+                    ValidatePaymentAmount();
                     OnPropertyChanged(nameof(CanProcessPayment));
                     ProcessPaymentCommand?.RaiseCanExecuteChanged();
                     _ = UpdateAllocationPreviewAsync();
@@ -100,10 +99,23 @@ namespace SnookerGameManagementSystem.ViewModels
         public string? SelectedPaymentMethod
         {
             get => _selectedPaymentMethod;
-            set => SetProperty(ref _selectedPaymentMethod, value);
+            set
+            {
+                if (SetProperty(ref _selectedPaymentMethod, value))
+                {
+                    ErrorMessage = string.Empty;
+                    ValidatePaymentMethod();
+                }
+            }
         }
 
-        public bool CanProcessPayment => PaymentAmount > 0;
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set => SetProperty(ref _errorMessage, value);
+        }
+
+        public bool CanProcessPayment => PaymentAmount > 0 && !string.IsNullOrWhiteSpace(SelectedPaymentMethod) && string.IsNullOrEmpty(ErrorMessage);
 
         public RelayCommand ProcessPaymentCommand
         {
@@ -121,17 +133,68 @@ namespace SnookerGameManagementSystem.ViewModels
 
         public bool DialogResult { get; set; }
 
+        private void ValidatePaymentAmount()
+        {
+            if (PaymentAmount <= 0)
+            {
+                ErrorMessage = "Payment amount must be greater than zero";
+            }
+            else if (PaymentAmount > CurrentBalance)
+            {
+                ErrorMessage = $"Payment amount (PKR {PaymentAmount:N2}) exceeds current balance (PKR {CurrentBalance:N2})";
+            }
+        }
+
+        private void ValidatePaymentMethod()
+        {
+            if (string.IsNullOrWhiteSpace(SelectedPaymentMethod))
+            {
+                ErrorMessage = "Please select a payment method";
+            }
+        }
+
         private async Task UpdateAllocationPreviewAsync()
         {
             try
             {
-                // Get unpaid charges for customer (FIFO order)
-                var unpaidCharges = await _ledgerService.GetUnpaidChargesAsync(_customerId);
-
                 AllocationPreview.Clear();
                 decimal remainingPayment = PaymentAmount;
 
-                foreach (var chargeInfo in unpaidCharges)
+                // First, show allocation to initial credit if it exists
+                if (_initialCredit > 0)
+                {
+                    // Calculate how much of initial credit has already been paid
+                    var totalPayments = await _ledgerService.GetCustomerBalanceAsync(_customerId); // This will be recalculated
+                    
+                    // Get unpaid charges to calculate what went to them
+                    var unpaidCharges = await _ledgerService.GetUnpaidChargesAsync(_customerId);
+                    var totalUnpaidCharges = unpaidCharges.Sum(c => c.RemainingAmount);
+                    
+                    // Initial credit remaining = current balance - unpaid charges
+                    var initialCreditRemaining = Math.Max(0, CurrentBalance - totalUnpaidCharges);
+                    
+                    if (initialCreditRemaining > 0 && remainingPayment > 0)
+                    {
+                        decimal toAllocate = Math.Min(remainingPayment, initialCreditRemaining);
+
+                        AllocationPreview.Add(new AllocationPreviewItem
+                        {
+                            ChargeId = Guid.Empty,
+                            FrameDescription = "Initial Outstanding Balance",
+                            ChargeAmount = _initialCredit,
+                            AllocatedAmount = toAllocate,
+                            RemainingAmount = initialCreditRemaining - toAllocate,
+                            IsInitialCredit = true
+                        });
+
+                        remainingPayment -= toAllocate;
+                    }
+                }
+
+                // Then show allocation to unpaid charges (FIFO order)
+                var charges = await _ledgerService.GetUnpaidChargesAsync(_customerId);
+
+                foreach (var chargeInfo in charges)
                 {
                     if (remainingPayment <= 0) break;
 
@@ -143,7 +206,8 @@ namespace SnookerGameManagementSystem.ViewModels
                         FrameDescription = chargeInfo.Charge.Description,
                         ChargeAmount = chargeInfo.Charge.AmountPk,
                         AllocatedAmount = toAllocate,
-                        RemainingAmount = chargeInfo.RemainingAmount - toAllocate
+                        RemainingAmount = chargeInfo.RemainingAmount - toAllocate,
+                        IsInitialCredit = false
                     });
 
                     remainingPayment -= toAllocate;
@@ -151,11 +215,7 @@ namespace SnookerGameManagementSystem.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error updating allocation preview: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ErrorMessage = $"Error updating allocation preview: {ex.Message}";
             }
         }
 
@@ -163,22 +223,49 @@ namespace SnookerGameManagementSystem.ViewModels
         {
             try
             {
+                // Final validation
+                if (PaymentAmount <= 0)
+                {
+                    ErrorMessage = "Payment amount must be greater than zero";
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(SelectedPaymentMethod))
+                {
+                    ErrorMessage = "Please select a payment method";
+                    return;
+                }
+
+                if (PaymentAmount > CurrentBalance)
+                {
+                    var result = MessageBox.Show(
+                        $"Payment amount (PKR {PaymentAmount:N2}) exceeds current balance (PKR {CurrentBalance:N2}).\n\nDo you want to continue?",
+                        "Confirm Overpayment",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    
+                    if (result == MessageBoxResult.No)
+                    {
+                        return;
+                    }
+                }
+
                 System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Starting payment processing...");
                 System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Customer ID: {_customerId}");
                 System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Amount: {PaymentAmount}");
-                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Method: {_selectedPaymentMethod}");
+                System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Method: {SelectedPaymentMethod}");
                 
-                var result = await _ledgerService.ProcessPaymentAsync(
+                var result2 = await _ledgerService.ProcessPaymentAsync(
                     _customerId,
                     PaymentAmount,
-                    _selectedPaymentMethod ?? "Cash");
+                    SelectedPaymentMethod ?? "Cash");
 
-                if (result)
+                if (result2)
                 {
                     System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Payment processed successfully!");
                     
                     MessageBox.Show(
-                        $"Payment of PKR {PaymentAmount:N2} processed successfully!",
+                        $"Payment of PKR {PaymentAmount:N2} via {SelectedPaymentMethod} processed successfully!",
                         "Success",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -189,12 +276,7 @@ namespace SnookerGameManagementSystem.ViewModels
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Payment processing returned false");
-                    
-                    MessageBox.Show(
-                        "Failed to process payment. Please try again.",
-                        "Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    ErrorMessage = "Failed to process payment. Please try again.";
                 }
             }
             catch (Exception ex)
@@ -206,11 +288,7 @@ namespace SnookerGameManagementSystem.ViewModels
                     System.Diagnostics.Debug.WriteLine($"[PaymentEntryViewModel] Inner exception: {ex.InnerException.Message}");
                 }
                 
-                MessageBox.Show(
-                    $"Error processing payment:\n\n{ex.Message}\n\n{(ex.InnerException != null ? "Inner: " + ex.InnerException.Message : "")}",
-                    "Payment Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                ErrorMessage = $"Error: {ex.Message}";
             }
         }
     }

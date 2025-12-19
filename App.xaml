@@ -5,9 +5,25 @@
              xmlns:converters="clr-namespace:SnookerGameManagementSystem.Converters"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
+        <!-- Converters -->
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        
+        <!-- Blue Gradient Color Palette -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#4D6A92"/><!-- Steel Blue - Headers, Main Elements -->
+        <SolidColorBrush x:Key="AccentColor" Color="#5A8FA0"/><!-- Light Steel Blue - Buttons, Highlights -->
+        <SolidColorBrush x:Key="ComplementaryColor" Color="#A2C6E9"/><!-- Light Sky Blue - Secondary Elements -->
+        
+        <!-- Keep existing colors for specific purposes -->
+        <SolidColorBrush x:Key="SuccessColor" Color="#4caf50"/><!-- Green for success -->
+        <SolidColorBrush x:Key="WarningColor" Color="#ff9800"/><!-- Orange for warnings -->
+        <SolidColorBrush x:Key="ErrorColor" Color="#ff6b6b"/><!-- Red for errors/delete -->
+        
+        <!-- Background colors -->
+        <SolidColorBrush x:Key="DarkBackground" Color="#1a1a2e"/>
+        <SolidColorBrush x:Key="MediumBackground" Color="#16213e"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#3a3a4e"/>
     </Application.Resources>
 </Application>

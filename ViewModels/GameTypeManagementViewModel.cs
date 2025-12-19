@@ -19,6 +19,9 @@ namespace SnookerGameManagementSystem.ViewModels
         public Guid Id => _gameType.Id;
         public string Name => _gameType.Name;
         public ICollection<GameRule> GameRules => _gameType.GameRules;
+        
+        public int RuleCount => _gameType.GameRules?.Count ?? 0;
+        
         public bool HasNoRules => _gameType.GameRules == null || !_gameType.GameRules.Any();
     }
 

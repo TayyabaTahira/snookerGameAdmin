@@ -31,12 +31,13 @@ namespace SnookerGameManagementSystem.Services
                 .FirstOrDefaultAsync(c => c.FullName.ToLower() == name.ToLower());
         }
 
-        public async Task<Customer> CreateCustomerAsync(string fullName, string? phone = null)
+        public async Task<Customer> CreateCustomerAsync(string fullName, string? phone = null, decimal initialCredit = 0)
         {
             var customer = new Customer
             {
                 FullName = fullName,
-                Phone = phone
+                Phone = phone,
+                InitialCreditPk = initialCredit
             };
 
             _context.Customers.Add(customer);
@@ -73,12 +74,32 @@ namespace SnookerGameManagementSystem.Services
 
         public async Task<decimal> GetCustomerBalanceAsync(Guid customerId)
         {
+            // Get customer's initial credit (old outstanding balance)
+            var customer = await _context.Customers.FindAsync(customerId);
+            var initialCredit = customer?.InitialCreditPk ?? 0;
+            
+            // Get total payments made by this customer
+            var totalPayments = await _context.LedgerPayments
+                .Where(p => p.CustomerId == customerId)
+                .SumAsync(p => (decimal?)p.AmountPk) ?? 0;
+
+            // Get total amount allocated to charges (game charges, not initial credit)
+            var totalAllocatedToCharges = await _context.PaymentAllocations
+                .Where(pa => pa.Charge.CustomerId == customerId)
+                .SumAsync(pa => (decimal?)pa.AllocatedAmountPk) ?? 0;
+
+            // Amount paid towards initial credit = total payments - amount allocated to charges
+            var paidToInitialCredit = Math.Max(0, totalPayments - totalAllocatedToCharges);
+            
+            // Remaining initial credit
+            var remainingInitialCredit = Math.Max(0, initialCredit - paidToInitialCredit);
+
             // Get all charges for this customer
             var charges = await _context.LedgerCharges
                 .Where(c => c.CustomerId == customerId)
                 .ToListAsync();
 
-            decimal totalOutstanding = 0;
+            decimal totalUnpaidCharges = 0;
 
             // For each charge, calculate how much is still unpaid
             foreach (var charge in charges)
@@ -90,11 +111,12 @@ namespace SnookerGameManagementSystem.Services
                 var outstanding = charge.AmountPk - alreadyPaid;
                 if (outstanding > 0)
                 {
-                    totalOutstanding += outstanding;
+                    totalUnpaidCharges += outstanding;
                 }
             }
 
-            return totalOutstanding;
+            // Total balance = remaining initial credit + unpaid charges
+            return remainingInitialCredit + totalUnpaidCharges;
         }
     }
 }

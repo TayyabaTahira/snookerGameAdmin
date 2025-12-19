@@ -236,7 +236,7 @@ namespace SnookerGameManagementSystem.ViewModels
         public bool HasActiveSession => _hasActiveSession;
         
         public string StatusBadge => HasActiveSession ? "In Use" : "Available";
-        public string StatusColor => HasActiveSession ? "#e94560" : "#4caf50";
+        public string StatusColor => HasActiveSession ? "#5A8FA0" : "#4caf50";
         public bool ShowSessionInfo => HasActiveSession && _activeSession != null;
         
         public string GameTypeName => _activeSession?.GameType?.Name ?? "";

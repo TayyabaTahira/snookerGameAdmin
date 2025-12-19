@@ -15,7 +15,7 @@
         <converters:GreaterThanConverter x:Key="GreaterThanConverter"/>
         
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="15,10"/>
@@ -35,14 +35,14 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#d83551"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="PaymentButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#2196f3"/>
+            <Setter Property="Foreground" Value="#A2C6E9"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -60,7 +60,7 @@
 
         <Style x:Key="DeleteButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#e94560"/>
+            <Setter Property="Foreground" Value="#ff6b6b"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -68,7 +68,7 @@
 
         <Style x:Key="HistoryButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#2196f3"/>
+            <Setter Property="Foreground" Value="#A2C6E9"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="8,4"/>

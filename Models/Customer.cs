@@ -7,6 +7,7 @@ namespace SnookerGameManagementSystem.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public string FullName { get; set; } = string.Empty;
         public string? Phone { get; set; }
+        public decimal InitialCreditPk { get; set; } = 0; // Old outstanding balance from before the system
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         
         // Computed property for display (not mapped to DB)

@@ -6,7 +6,7 @@
         mc:Ignorable="d"
         Title="Customer History" 
         Height="700" 
-        Width="1000"
+        Width="1200"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e">
 
@@ -47,6 +47,10 @@
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#1a2a45"/>
                 </Trigger>
+                <DataTrigger Binding="{Binding IsInitialCredit}" Value="True">
+                    <Setter Property="Background" Value="#2d1f3f"/>
+                    <Setter Property="FontStyle" Value="Italic"/>
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -100,24 +104,42 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="Total Games" Foreground="#a0a0b0" FontSize="12"/>
                     <TextBlock Text="{Binding TotalGames}" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Foreground="#a0a0b0" FontSize="10" Margin="0,2,0,0">
+                        <Run Text="W:"/>
+                        <Run Text="{Binding TotalWins}" Foreground="#4caf50"/>
+                        <Run Text=" L:"/>
+                        <Run Text="{Binding TotalLosses}" Foreground="#e94560"/>
+                    </TextBlock>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1">
+                    <TextBlock Text="Win Rate" Foreground="#a0a0b0" FontSize="12"/>
+                    <TextBlock Text="{Binding WinRateDisplay}" FontSize="20" FontWeight="Bold" Foreground="#4caf50"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Initial Credit" Foreground="#a0a0b0" FontSize="12"/>
+                    <TextBlock Text="{Binding InitialCredit, StringFormat='PKR {0:N2}'}" FontSize="20" FontWeight="Bold" Foreground="#9c27b0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3">
                     <TextBlock Text="Total Charged" Foreground="#a0a0b0" FontSize="12"/>
                     <TextBlock Text="{Binding TotalCharged, StringFormat='PKR {0:N2}'}" FontSize="20" FontWeight="Bold" Foreground="#e94560"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="2">
+                <StackPanel Grid.Column="4">
                     <TextBlock Text="Total Paid" Foreground="#a0a0b0" FontSize="12"/>
                     <TextBlock Text="{Binding TotalPaid, StringFormat='PKR {0:N2}'}" FontSize="20" FontWeight="Bold" Foreground="#4caf50"/>
                 </StackPanel>
 
-                <StackPanel Grid.Column="3">
+                <StackPanel Grid.Column="5">
                     <TextBlock Text="Balance Due" Foreground="#a0a0b0" FontSize="12"/>
                     <TextBlock Text="{Binding BalanceDue, StringFormat='PKR {0:N2}'}" FontSize="20" FontWeight="Bold" Foreground="#ff9800"/>
                 </StackPanel>
@@ -129,10 +151,23 @@
                  Style="{StaticResource DataGridStyle}"
                  ItemsSource="{Binding GameHistory}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Date/Time" Binding="{Binding Timestamp, StringFormat='dd/MM/yyyy HH:mm'}" Width="140"/>
-                <DataGridTextColumn Header="Table" Binding="{Binding TableName}" Width="100"/>
-                <DataGridTextColumn Header="Game Type" Binding="{Binding GameType}" Width="120"/>
-                <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="80">
+                <DataGridTextColumn Header="Date/Time" Binding="{Binding Timestamp, StringFormat='dd/MM/yyyy HH:mm'}" Width="130"/>
+                <DataGridTextColumn Header="Table" Binding="{Binding TableName}" Width="90"/>
+                <DataGridTextColumn Header="Game Type" Binding="{Binding GameType}" Width="110">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="White"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsInitialCredit}" Value="True">
+                                    <Setter Property="Foreground" Value="#9c27b0"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="90"/>
+                <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="70">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="White"/>
@@ -148,7 +183,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Win Streak" Binding="{Binding WinStreak}" Width="100">
+                <DataGridTextColumn Header="Win Streak" Binding="{Binding WinStreak}" Width="90">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="White"/>
@@ -166,7 +201,9 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Amount Due" Binding="{Binding AmountDue, StringFormat='PKR {0:N2}'}" Width="120">
+                <DataGridTextColumn Header="Charged" Binding="{Binding TotalCharged, StringFormat='PKR {0:N2}'}" Width="100"/>
+                <DataGridTextColumn Header="Paid" Binding="{Binding AmountPaid, StringFormat='PKR {0:N2}'}" Width="100"/>
+                <DataGridTextColumn Header="Due" Binding="{Binding AmountDue, StringFormat='PKR {0:N2}'}" Width="100">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="#ff9800"/>
@@ -179,8 +216,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Amount Paid" Binding="{Binding AmountPaid, StringFormat='PKR {0:N2}'}" Width="120"/>
-                <DataGridTextColumn Header="Status" Binding="{Binding PaymentStatus}" Width="*">
+                <DataGridTextColumn Header="Status" Binding="{Binding PaymentStatus}" Width="90">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="White"/>
@@ -194,6 +230,18 @@
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding PaymentStatus}" Value="Partial">
                                     <Setter Property="Foreground" Value="#ff9800"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Method" Binding="{Binding PaymentMethod}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#a0a0b0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding PaymentMethod}" Value="-">
+                                    <Setter Property="Foreground" Value="#555555"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>

@@ -34,7 +34,7 @@
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Effect">
                         <Setter.Value>
-                            <DropShadowEffect Color="#e94560" BlurRadius="20" ShadowDepth="5" Opacity="0.7"/>
+                            <DropShadowEffect Color="#5A8FA0" BlurRadius="20" ShadowDepth="5" Opacity="0.7"/>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -73,10 +73,10 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Foreground" Value="#e94560"/>
+                    <Setter Property="Foreground" Value="#5A8FA0"/>
                     <Setter Property="Effect">
                         <Setter.Value>
-                            <DropShadowEffect Color="#e94560" BlurRadius="20" ShadowDepth="5" Opacity="0.7"/>
+                            <DropShadowEffect Color="#5A8FA0" BlurRadius="20" ShadowDepth="5" Opacity="0.7"/>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -91,7 +91,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#0f3460" Padding="20">
+        <Border Grid.Row="0" Background="#4D6A92" Padding="20">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -109,60 +109,415 @@
                                   Foreground="White"/>
                         <TextBlock Text="Active Tables Dashboard" 
                                   FontSize="12" 
-                                  Foreground="#a0a0b0"/>
+                                  Foreground="#E8F0F7"/>
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Right: Action Buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Button Content="🔄 Refresh" 
-                           Command="{Binding RefreshCommand}"
-                           Background="#16213e"
+                    <Button Command="{Binding RefreshCommand}"
+                           Background="#5A8FA0"
                            Foreground="White"
-                           FontFamily="Segoe UI Emoji"
-                           Padding="15,8"
+                           FontFamily="Segoe UI"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Padding="15,10"
                            Margin="0,0,10,0"
                            BorderThickness="0"
-                           Cursor="Hand"/>
+                           Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="ButtonShadow" 
+                                                         Color="#000000" 
+                                                         BlurRadius="0" 
+                                                         ShadowDepth="0" 
+                                                         Opacity="0"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#7BA8B6"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="10"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0.4"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#5A8FA0"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔄" FontFamily="Segoe UI Emoji" Margin="0,0,6,0" Foreground="White"/>
+                            <TextBlock Text="Refresh" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                     
-                    <Button Content="🎮 Game Types" 
-                           Background="#16213e"
+                    <Button Command="{Binding GameTypesCommand}"
+                           Background="#5A8FA0"
                            Foreground="White"
-                           FontFamily="Segoe UI Emoji"
-                           Padding="15,8"
+                           FontFamily="Segoe UI"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Padding="15,10"
                            Margin="0,0,10,0"
                            BorderThickness="0"
-                           Cursor="Hand"
-                           Command="{Binding GameTypesCommand}"/>
+                           Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="ButtonShadow" 
+                                                         Color="#000000" 
+                                                         BlurRadius="0" 
+                                                         ShadowDepth="0" 
+                                                         Opacity="0"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#7BA8B6"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="10"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0.4"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#5A8FA0"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎮" FontFamily="Segoe UI Emoji" Margin="0,0,6,0" Foreground="White"/>
+                            <TextBlock Text="Game Types" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                     
-                    <Button Content="🎱 Tables" 
-                           Background="#16213e"
+                    <Button Command="{Binding TablesManagementCommand}"
+                           Background="#5A8FA0"
                            Foreground="White"
-                           FontFamily="Segoe UI Emoji"
-                           Padding="15,8"
+                           FontFamily="Segoe UI"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Padding="15,10"
                            Margin="0,0,10,0"
                            BorderThickness="0"
-                           Cursor="Hand"
-                           Command="{Binding TablesManagementCommand}"/>
+                           Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="ButtonShadow" 
+                                                         Color="#000000" 
+                                                         BlurRadius="0" 
+                                                         ShadowDepth="0" 
+                                                         Opacity="0"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#7BA8B6"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="10"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0.4"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#5A8FA0"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎱" FontFamily="Segoe UI Emoji" Margin="0,0,6,0" Foreground="White"/>
+                            <TextBlock Text="Tables" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                     
-                    <Button Content="👥 Customers" 
-                           Background="#16213e"
+                    <Button Command="{Binding CustomersCommand}"
+                           Background="#5A8FA0"
                            Foreground="White"
-                           FontFamily="Segoe UI Emoji"
-                           Padding="15,8"
+                           FontFamily="Segoe UI"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Padding="15,10"
                            Margin="0,0,10,0"
                            BorderThickness="0"
-                           Cursor="Hand"
-                           Command="{Binding CustomersCommand}"/>
+                           Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="ButtonShadow" 
+                                                         Color="#000000" 
+                                                         BlurRadius="0" 
+                                                         ShadowDepth="0" 
+                                                         Opacity="0"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#7BA8B6"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="10"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0.4"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#5A8FA0"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="👥" FontFamily="Segoe UI Emoji" Margin="0,0,6,0" Foreground="White"/>
+                            <TextBlock Text="Customers" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                     
-                    <Button Content="📊 Reports" 
-                           Background="#16213e"
+                    <Button Command="{Binding ReportsCommand}"
+                           Background="#5A8FA0"
                            Foreground="White"
-                           FontFamily="Segoe UI Emoji"
-                           Padding="15,8"
+                           FontFamily="Segoe UI"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Padding="15,10"
                            BorderThickness="0"
-                           Cursor="Hand"
-                           Command="{Binding ReportsCommand}"/>
+                           Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ButtonBorder"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Border.Effect>
+                                        <DropShadowEffect x:Name="ButtonShadow" 
+                                                         Color="#000000" 
+                                                         BlurRadius="0" 
+                                                         ShadowDepth="0" 
+                                                         Opacity="0"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#7BA8B6"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="10"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0.4"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="ButtonBorder"
+                                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                                   To="#5A8FA0"
+                                                                   Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="BlurRadius"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                    <DoubleAnimation Storyboard.TargetName="ButtonShadow"
+                                                                    Storyboard.TargetProperty="Opacity"
+                                                                    To="0"
+                                                                    Duration="0:0:0.2"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter TargetName="ButtonBorder" Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📊" FontFamily="Segoe UI Emoji" Margin="0,0,6,0" Foreground="White"/>
+                            <TextBlock Text="Reports" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -314,7 +669,7 @@
 
                                 <!-- Action Button - View -->
                                 <Button Grid.Row="4"
-                                       Background="#2196f3"
+                                       Background="#5A8FA0"
                                        Foreground="White"
                                        FontSize="12"
                                        FontWeight="Bold"
@@ -341,10 +696,10 @@
                                     </Button.Template>
                                     <Button.Style>
                                         <Style TargetType="Button">
-                                            <Setter Property="Background" Value="#2196f3"/>
+                                            <Setter Property="Background" Value="#5A8FA0"/>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#1976d2"/>
+                                                    <Setter Property="Background" Value="#4D6A92"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>

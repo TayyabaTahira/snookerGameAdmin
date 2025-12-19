@@ -18,7 +18,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         
         <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="Background" Value="#16213e"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="20,12"/>
@@ -39,27 +39,28 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#e94560"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="#d83551"/>
+            <Setter Property="Background" Value="#ff6b6b"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#b82841"/>
+                    <Setter Property="Background" Value="#e94560"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="SmallButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#e94560"/>
-            <Setter Property="BorderBrush" Value="#e94560"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Foreground" Value="#5A8FA0"/>
+            <Setter Property="BorderBrush" Value="#5A8FA0"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -67,7 +68,7 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
+                                CornerRadius="6"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -76,7 +77,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#e94560"/>
+                    <Setter Property="Background" Value="#5A8FA0"/>
                     <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
@@ -100,7 +101,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#0f3460" Padding="20">
+        <Border Grid.Row="0" Background="#4D6A92" Padding="20">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -114,7 +115,7 @@
                               Foreground="White"/>
                     <TextBlock Text="{Binding GameTypeName}" 
                               FontSize="14" 
-                              Foreground="#e94560"
+                              Foreground="#A2C6E9"
                               Margin="0,5,0,0"/>
                 </StackPanel>
 
@@ -126,7 +127,7 @@
                               HorizontalAlignment="Right"/>
                     <TextBlock Text="Elapsed Time" 
                               FontSize="12" 
-                              Foreground="#a0a0b0"
+                              Foreground="#E8F0F7"
                               HorizontalAlignment="Right"/>
                 </StackPanel>
             </Grid>
@@ -204,21 +205,22 @@
                                                           VerticalAlignment="Center"/>
                                                 <TextBlock Text="{Binding WinStreak}"
                                                           FontSize="16"
-                                                          Foreground="#e94560"
+                                                          Foreground="#5A8FA0"
                                                           FontWeight="Bold"
                                                           VerticalAlignment="Center"
                                                           Margin="5,0,0,0"/>
                                             </StackPanel>
 
                                             <Button Grid.Column="2"
-                                                   Content="Remove"
+                                                   Content="🗑️ Remove"
                                                    Background="Transparent"
-                                                   Foreground="#d83551"
-                                                   BorderBrush="#d83551"
+                                                   Foreground="#ff6b6b"
+                                                   BorderBrush="#ff6b6b"
                                                    BorderThickness="1"
-                                                   Padding="8,4"
+                                                   Padding="10,6"
                                                    Cursor="Hand"
                                                    FontSize="12"
+                                                   FontFamily="Segoe UI Emoji"
                                                    Command="{Binding DataContext.RemovePlayerCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                    CommandParameter="{Binding}"/>
                                         </Grid>
@@ -245,7 +247,7 @@
                     <TextBlock Text="{Binding FrameCount}" 
                               FontSize="64" 
                               FontWeight="Bold" 
-                              Foreground="#e94560"
+                              Foreground="#5A8FA0"
                               HorizontalAlignment="Center"/>
                 </Border>
 
@@ -281,7 +283,7 @@
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding GameTypeName}" Foreground="White" Margin="0,0,0,8"/>
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Status:" Foreground="#a0a0b0"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="In Progress" Foreground="#4ade80" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="In Progress" Foreground="#4caf50" FontWeight="SemiBold"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -289,7 +291,7 @@
         </ScrollViewer>
 
         <!-- Action Buttons with proper icons -->
-        <Border Grid.Row="2" Background="#0f3460" Padding="20">
+        <Border Grid.Row="2" Background="#4D6A92" Padding="20">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -298,22 +300,63 @@
                 </Grid.ColumnDefinitions>
 
                 <Button Grid.Column="0"
-                       Content="End Game"
                        Style="{StaticResource DangerButton}"
+                       FontFamily="Segoe UI"
                        Command="{Binding EndGameCommand}"
-                       ToolTip="End current game and show billing"/>
+                       ToolTip="End current game and show billing">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🛑" FontFamily="Segoe UI Emoji" Margin="0,0,8,0"/>
+                        <TextBlock Text="End Game"/>
+                    </StackPanel>
+                </Button>
 
                 <Button Grid.Column="1"
-                       Content="Next Frame"
-                       Style="{StaticResource ActionButton}"
+                       Background="#5A8FA0"
+                       Foreground="White"
+                       BorderThickness="0"
+                       Padding="20,12"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Cursor="Hand"
+                       Margin="5"
+                       FontFamily="Segoe UI"
                        Command="{Binding NextFrameCommand}"
-                       ToolTip="Start next frame"/>
+                       ToolTip="Start next frame">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#5A8FA0"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#7BA8B6"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="▶" FontFamily="Segoe UI Emoji" Margin="0,0,8,0" Foreground="White"/>
+                        <TextBlock Text="Next Frame" Foreground="White"/>
+                    </StackPanel>
+                </Button>
 
                 <Button Grid.Column="2"
-                       Content="Quit Session"
                        Style="{StaticResource DangerButton}"
+                       FontFamily="Segoe UI"
                        Command="{Binding QuitSessionCommand}"
-                       ToolTip="End and close this session"/>
+                       ToolTip="End and close this session">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="❌" FontFamily="Segoe UI Emoji" Margin="0,0,8,0"/>
+                        <TextBlock Text="Quit Session"/>
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
     </Grid>

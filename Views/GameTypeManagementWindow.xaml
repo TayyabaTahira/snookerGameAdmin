@@ -5,10 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Game Type Management" 
-        Height="600" 
-        Width="800"
+        Height="650" 
+        Width="900"
         WindowStartupLocation="CenterOwner"
-        Background="#1a1a2e">
+        Background="#1a1a2e"
+        ResizeMode="CanResize"
+        MinHeight="500"
+        MinWidth="800">
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -19,10 +22,10 @@
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="Padding" Value="18,12"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -30,6 +33,35 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#4D6A92"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="EditButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#5A8FA0"/>
+            <Setter Property="BorderBrush" Value="#5A8FA0"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="6"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -39,18 +71,20 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#d83551"/>
+                    <Setter Property="Background" Value="#5A8FA0"/>
+                    <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="DangerButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#e94560"/>
-            <Setter Property="BorderBrush" Value="#e94560"/>
+            <Setter Property="Foreground" Value="#ff6b6b"/>
+            <Setter Property="BorderBrush" Value="#ff6b6b"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -58,7 +92,7 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
+                                CornerRadius="6"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -67,60 +101,69 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#e94560"/>
+                    <Setter Property="Background" Value="#ff6b6b"/>
                     <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="30">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" Background="#4D6A92" Padding="25,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0">
-                <TextBlock Text="Game Type Management" 
-                          FontSize="24" 
-                          FontWeight="Bold" 
-                          Foreground="White"
-                          Margin="0,0,0,5"/>
-                <TextBlock Text="Manage game types and their rules" 
-                          FontSize="12" 
-                          Foreground="#a0a0b0"/>
-            </StackPanel>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Game Type Management" 
+                              FontSize="26" 
+                              FontWeight="Bold" 
+                              Foreground="White"
+                              Margin="0,0,0,5"/>
+                    <TextBlock Text="Manage game types and their rules" 
+                              FontSize="13" 
+                              Foreground="#E8F0F7"/>
+                </StackPanel>
 
-            <Button Grid.Column="1"
-                   Content="➕ Add Game Type"
-                   Style="{StaticResource PrimaryButton}"
-                   Command="{Binding AddGameTypeCommand}"/>
-        </Grid>
+                <Button Grid.Column="1"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource PrimaryButton}"
+                       Command="{Binding AddGameTypeCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="+" FontFamily="Segoe UI" FontWeight="Bold" FontSize="18" Margin="0,0,8,0"/>
+                        <TextBlock Text="Add Game Type"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
 
         <!-- Game Types List -->
         <Border Grid.Row="1"
                Background="#16213e"
                BorderBrush="#3a3a4e"
-               BorderThickness="2"
-               CornerRadius="8"
-               Padding="20">
+               BorderThickness="0"
+               Padding="30,25">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding GameTypes}" Margin="0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#0f3460"
-                                   BorderBrush="#3a3a4e"
-                                   BorderThickness="1"
-                                   CornerRadius="6"
-                                   Padding="20"
-                                   Margin="0,0,0,15">
+                                   BorderBrush="#5A8FA0"
+                                   BorderThickness="0,0,0,3"
+                                   CornerRadius="8"
+                                   Padding="25"
+                                   Margin="0,0,0,20">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000" BlurRadius="15" ShadowDepth="2" Opacity="0.3"/>
+                                </Border.Effect>
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -128,75 +171,141 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- Header -->
-                                    <Grid Grid.Row="0">
+                                    <Grid Grid.Row="0" Margin="0,0,0,15">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <TextBlock Grid.Column="0"
-                                                  Text="{Binding Name}" 
-                                                  FontSize="18" 
-                                                  FontWeight="Bold"
-                                                  VerticalAlignment="Center"/>
+                                        <!-- Game Type Icon -->
+                                        <Border Grid.Column="0"
+                                               Background="#5A8FA0"
+                                               Width="50"
+                                               Height="50"
+                                               CornerRadius="25"
+                                               Margin="0,0,15,0">
+                                            <TextBlock Text="🎮" 
+                                                      FontFamily="Segoe UI Emoji"
+                                                      FontSize="24"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                        </Border>
 
-                                        <Button Grid.Column="1"
-                                               Content="✏️ Edit"
-                                               Background="Transparent"
-                                               Foreground="#4caf50"
-                                               BorderThickness="0"
-                                               Cursor="Hand"
-                                               Padding="10,5"
-                                               Margin="0,0,5,0"
-                                               Command="{Binding DataContext.EditGameTypeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" 
+                                                      FontSize="20" 
+                                                      FontWeight="Bold"
+                                                      Foreground="White"
+                                                      Margin="0,0,0,3"/>
+                                            <TextBlock FontSize="12" 
+                                                      Foreground="#a0a0b0">
+                                                <Run Text="Rules: "/>
+                                                <Run Text="{Binding RuleCount, Mode=OneWay}" 
+                                                     Foreground="#5A8FA0" 
+                                                     FontWeight="Bold"/>
+                                            </TextBlock>
+                                        </StackPanel>
 
                                         <Button Grid.Column="2"
-                                               Content="🗑️ Delete"
+                                               Style="{StaticResource EditButton}"
+                                               Margin="0,0,10,0"
+                                               Command="{Binding DataContext.EditGameTypeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="✏" FontFamily="Segoe UI" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Edit"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Grid.Column="3"
                                                Style="{StaticResource DangerButton}"
                                                Command="{Binding DataContext.DeleteGameTypeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}"/>
+                                               CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="🗑" FontFamily="Segoe UI Emoji" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Delete"/>
+                                            </StackPanel>
+                                        </Button>
                                     </Grid>
 
                                     <!-- Rules -->
-                                    <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                                    <StackPanel Grid.Row="1">
+                                        <Border Height="2" 
+                                               Background="#2a3a4e" 
+                                               Margin="0,0,0,15"
+                                               CornerRadius="1"/>
+                                        
                                         <TextBlock Text="Rules:" 
-                                                  FontSize="12" 
-                                                  Foreground="#a0a0b0" 
-                                                  Margin="0,0,0,5"/>
+                                                  FontSize="13" 
+                                                  FontWeight="SemiBold"
+                                                  Foreground="#A2C6E9" 
+                                                  Margin="0,0,0,10"/>
+                                        
                                         <ItemsControl ItemsSource="{Binding GameRules}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="#1a1a2e"
-                                                           BorderBrush="#3a3a4e"
+                                                    <Border Background="#1a2940"
+                                                           BorderBrush="#3a4a5e"
                                                            BorderThickness="1"
-                                                           CornerRadius="4"
-                                                           Padding="10"
-                                                           Margin="0,0,0,5">
+                                                           CornerRadius="6"
+                                                           Padding="15,12"
+                                                           Margin="0,0,0,10">
                                                         <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
 
-                                                            <StackPanel Grid.Column="0">
-                                                                <TextBlock Text="{Binding Description}" 
-                                                                          FontSize="13"
-                                                                          Foreground="#E0E0E0"
-                                                                          FontWeight="SemiBold"
-                                                                          Margin="0,0,0,5"/>
-                                                                <TextBlock FontSize="12" 
-                                                                          Foreground="#a0a0b0">
-                                                                    <Run Text="Base Rate:"/>
-                                                                    <Run Text="{Binding BaseRate, StringFormat='PKR {0:N2}'}" 
-                                                                         Foreground="#4caf50" 
-                                                                         FontWeight="Bold"/>
-                                                                    <Run Text=" | Overtime Rate:"/>
-                                                                    <Run Text="{Binding OvertimeRate, StringFormat='PKR {0:N2}'}" 
-                                                                         Foreground="#ff9800" 
-                                                                         FontWeight="Bold"/>
-                                                                </TextBlock>
+                                                            <TextBlock Grid.Row="0"
+                                                                      Text="{Binding Description}" 
+                                                                      FontSize="14"
+                                                                      Foreground="White"
+                                                                      FontWeight="SemiBold"
+                                                                      Margin="0,0,0,8"/>
+                                                            
+                                                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                                                <Border Background="#1e3a1e" 
+                                                                       BorderBrush="#4caf50"
+                                                                       BorderThickness="1"
+                                                                       CornerRadius="4"
+                                                                       Padding="10,5"
+                                                                       Margin="0,0,10,0">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="💰 " 
+                                                                                  FontFamily="Segoe UI Emoji"
+                                                                                  FontSize="12"
+                                                                                  Margin="0,0,5,0"/>
+                                                                        <TextBlock Text="Base Rate: " 
+                                                                                  FontSize="12" 
+                                                                                  Foreground="#c0c0c0"/>
+                                                                        <TextBlock Text="{Binding BaseRate, StringFormat='PKR {0:N2}'}" 
+                                                                                  FontSize="12"
+                                                                                  Foreground="#4caf50" 
+                                                                                  FontWeight="Bold"/>
+                                                                    </StackPanel>
+                                                                </Border>
+                                                                
+                                                                <Border Background="#3a2e1e" 
+                                                                       BorderBrush="#ff9800"
+                                                                       BorderThickness="1"
+                                                                       CornerRadius="4"
+                                                                       Padding="10,5">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="⏱ " 
+                                                                                  FontFamily="Segoe UI Emoji"
+                                                                                  FontSize="12"
+                                                                                  Margin="0,0,5,0"/>
+                                                                        <TextBlock Text="Overtime: " 
+                                                                                  FontSize="12" 
+                                                                                  Foreground="#c0c0c0"/>
+                                                                        <TextBlock Text="{Binding OvertimeRate, StringFormat='PKR {0:N2}'}" 
+                                                                                  FontSize="12"
+                                                                                  Foreground="#ff9800" 
+                                                                                  FontWeight="Bold"/>
+                                                                    </StackPanel>
+                                                                </Border>
                                                             </StackPanel>
                                                         </Grid>
                                                     </Border>
@@ -205,11 +314,26 @@
                                         </ItemsControl>
 
                                         <!-- No rules message -->
-                                        <TextBlock Text="No rules defined for this game type" 
-                                                  FontSize="12" 
-                                                  FontStyle="Italic" 
-                                                  Foreground="#6a6a7e"
-                                                  Visibility="{Binding HasNoRules, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        <Border Background="#2a2a3e"
+                                               BorderBrush="#3a3a4e"
+                                               BorderThickness="1"
+                                               CornerRadius="6"
+                                               Padding="20"
+                                               Visibility="{Binding HasNoRules, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <StackPanel HorizontalAlignment="Center">
+                                                <TextBlock Text="📋" 
+                                                          FontFamily="Segoe UI Emoji"
+                                                          FontSize="32"
+                                                          HorizontalAlignment="Center"
+                                                          Margin="0,0,0,10"
+                                                          Opacity="0.5"/>
+                                                <TextBlock Text="No rules defined for this game type" 
+                                                          FontSize="13" 
+                                                          FontStyle="Italic" 
+                                                          Foreground="#6a6a7e"
+                                                          HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
                                 </Grid>
                             </Border>

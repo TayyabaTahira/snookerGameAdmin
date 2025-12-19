@@ -326,10 +326,11 @@
                             <DataGrid ItemsSource="{Binding RecentGames}"
                                      Margin="0" Padding="10">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="120"/>
-                                    <DataGridTextColumn Header="Players" Binding="{Binding Players}" Width="2*"/>
-                                    <DataGridTextColumn Header="Winner" Binding="{Binding Winner}" Width="*"/>
-                                    <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" Width="110"/>
+                                    <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="110"/>
+                                    <DataGridTextColumn Header="Players" Binding="{Binding Players}" Width="*"/>
+                                    <DataGridTextColumn Header="Winner" Binding="{Binding Winner}" Width="120"/>
+                                    <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="80"/>
+                                    <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" Width="100"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </ScrollViewer>

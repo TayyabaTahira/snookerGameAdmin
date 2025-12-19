@@ -150,15 +150,15 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#e94560"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#5A8FA0"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#e94560"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#5A8FA0"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#e94560"/>
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#5A8FA0"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -168,7 +168,7 @@
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="20,12"/>
@@ -188,7 +188,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#d83551"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Background" Value="#3a3a4e"/>
@@ -220,7 +220,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#e94560"/>
+                    <Setter Property="BorderBrush" Value="#5A8FA0"/>
                     <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
@@ -228,11 +228,12 @@
 
         <Style x:Key="SmallButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#e94560"/>
-            <Setter Property="BorderBrush" Value="#e94560"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Foreground" Value="#ff6b6b"/>
+            <Setter Property="BorderBrush" Value="#ff6b6b"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="10,6"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -240,7 +241,7 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4"
+                                CornerRadius="6"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
@@ -249,7 +250,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#e94560"/>
+                    <Setter Property="Background" Value="#ff6b6b"/>
                     <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
@@ -277,7 +278,7 @@
         </StackPanel>
 
         <!-- Form -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <!-- Table Name -->
                 <TextBlock Text="Table Name"/>
@@ -312,11 +313,47 @@
 
                         <!-- Add Player Button -->
                         <Button Grid.Row="0"
-                               Content="➕ Add Player from Customers"
-                               Style="{StaticResource SmallButton}"
-                               Height="35"
                                Margin="0,0,0,10"
-                               Command="{Binding AddPlayerCommand}"/>
+                               Command="{Binding AddPlayerCommand}"
+                               Background="Transparent"
+                               Foreground="#4caf50"
+                               BorderBrush="#4caf50"
+                               BorderThickness="2"
+                               Padding="14,12"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Cursor="Hand"
+                               HorizontalContentAlignment="Center"
+                               VerticalContentAlignment="Center">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="6"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#4caf50"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Add Player from Customers" 
+                                           FontSize="13"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
 
                         <!-- Players List -->
                         <ScrollViewer Grid.Row="1" 

@@ -5,13 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="{Binding DialogTitle}" 
-        Height="400" 
+        Height="600" 
         Width="500"
         WindowStartupLocation="CenterOwner"
         Background="#1a1a2e"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        SizeToContent="Height"
+        MinHeight="550">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
@@ -26,10 +30,11 @@
             <Setter Property="Padding" Value="10"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Height" Value="40"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button">
-            <Setter Property="Background" Value="#e94560"/>
+            <Setter Property="Background" Value="#5A8FA0"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="20,12"/>
@@ -49,7 +54,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#d83551"/>
+                    <Setter Property="Background" Value="#4D6A92"/>
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Background" Value="#3a3a4e"/>
@@ -81,7 +86,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="BorderBrush" Value="#e94560"/>
+                    <Setter Property="BorderBrush" Value="#5A8FA0"/>
                     <Setter Property="Foreground" Value="White"/>
                 </Trigger>
             </Style.Triggers>
@@ -108,7 +113,7 @@
         </StackPanel>
 
         <!-- Form -->
-        <StackPanel Grid.Row="1" VerticalAlignment="Top">
+        <StackPanel Grid.Row="1" Margin="0,0,0,20">
             <!-- Full Name -->
             <TextBlock Text="Full Name *"/>
             <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
@@ -119,6 +124,18 @@
             <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
                     Margin="0,0,0,15"/>
 
+            <!-- Initial Credit (only shown when creating new customer) -->
+            <StackPanel Visibility="{Binding IsInitialCreditVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="Initial Outstanding Credit (PKR)"/>
+                <TextBox Text="{Binding InitialCredit, UpdateSourceTrigger=PropertyChanged}"
+                        Margin="0,0,0,5"/>
+                <TextBlock Text="Enter any old outstanding balance from before using this system" 
+                          FontSize="11" 
+                          Foreground="#a0a0b0"
+                          Margin="0,0,0,15"
+                          TextWrapping="Wrap"/>
+            </StackPanel>
+
             <!-- Info -->
             <Border Background="#16213e"
                    BorderBrush="#3a3a4e"
@@ -126,7 +143,7 @@
                    CornerRadius="6"
                    Padding="15"
                    Margin="0,10,0,0">
-                <TextBlock Text="?? Customer will be added to the database and can be selected when creating tables or frames." 
+                <TextBlock Text="? Customer will be added to the database and can be selected when creating tables or frames." 
                           FontSize="12" 
                           Foreground="#a0a0b0"
                           TextWrapping="Wrap"/>
@@ -134,26 +151,21 @@
         </StackPanel>
 
         <!-- Action Buttons -->
-        <Grid Grid.Row="2" Margin="0,20,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <Button Grid.Column="1"
-                   Content="Cancel"
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,0,0,10">
+            <Button Content="Cancel"
                    Style="{StaticResource SecondaryButton}"
                    Width="100"
                    Margin="0,0,10,0"
                    Click="Cancel_Click"/>
 
-            <Button Grid.Column="2"
-                   Content="{Binding SaveButtonText}"
+            <Button Content="{Binding SaveButtonText}"
                    Style="{StaticResource PrimaryButton}"
                    Width="130"
                    Click="Save_Click"
                    IsEnabled="{Binding CanSave}"/>
-        </Grid>
+        </StackPanel>
     </Grid>
 </Window>

@@ -1,8 +1,9 @@
 <Window x:Class="SnookerGameManagementSystem.Views.PaymentEntryDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:SnookerGameManagementSystem.Converters"
         Title="Payment Entry" 
-        Height="650" 
+        Height="700" 
         Width="750"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
@@ -11,6 +12,9 @@
         ResizeMode="NoResize">
 
     <Window.Resources>
+        <!-- Converters -->
+        <local:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter"/>
+        
         <!-- Dark Theme Colors -->
         <SolidColorBrush x:Key="BackgroundBrush" Color="#1a1a2e"/>
         <SolidColorBrush x:Key="CardBackgroundBrush" Color="#16213e"/>
@@ -228,6 +232,16 @@
             <Setter Property="AlternatingRowBackground" Value="{StaticResource DarkBackgroundBrush}"/>
         </Style>
 
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsInitialCredit}" Value="True">
+                    <Setter Property="Background" Value="#2d1f3f"/>
+                    <Setter Property="FontStyle" Value="Italic"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <Style TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="{StaticResource DarkBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
@@ -327,14 +341,37 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Error Message -->
+                    <Border Background="#ff5555" 
+                            Padding="15" 
+                            CornerRadius="4" 
+                            Margin="0,0,0,15"
+                            Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                        <TextBlock Text="{Binding ErrorMessage}" 
+                                   FontSize="13" 
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+
                     <!-- Payment Amount -->
                     <Label Content="Payment Amount (PKR):" FontWeight="SemiBold"/>
                     <TextBox Text="{Binding PaymentAmount, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"/>
+                    <TextBlock Text="Enter the amount being paid"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,3,0,10"
+                               TextWrapping="Wrap"/>
 
                     <!-- Payment Method -->
                     <Label Content="Payment Method:" FontWeight="SemiBold"/>
                     <ComboBox ItemsSource="{Binding PaymentMethods}" 
                               SelectedItem="{Binding SelectedPaymentMethod}"/>
+                    <TextBlock Text="Select how the payment was received (Cash, Bank Transfer, EasyPaisa, JazzCash, etc.)"
+                               FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Margin="0,3,0,10"
+                               TextWrapping="Wrap"/>
 
                     <!-- Allocation Preview -->
                     <Label Content="Payment Allocation Preview (FIFO):" 
@@ -347,7 +384,19 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Frame" 
                                                 Binding="{Binding FrameDescription}" 
-                                                Width="*"/>
+                                                Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsInitialCredit}" Value="True">
+                                                <Setter Property="Foreground" Value="#9c27b0"/>
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="Charge Amount" 
                                                 Binding="{Binding ChargeAmount, StringFormat=N2}" 
                                                 Width="120"/>
@@ -366,7 +415,8 @@
                                 Margin="0,20,0,0">
                         <Button Content="Process Payment" 
                                 Command="{Binding ProcessPaymentCommand}"
-                                MinWidth="140"/>
+                                MinWidth="140"
+                                IsEnabled="{Binding CanProcessPayment}"/>
                         <Button Content="Cancel" 
                                 Click="CloseButton_Click"
                                 Background="#6a6a7e"
